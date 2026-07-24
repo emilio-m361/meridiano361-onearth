@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { lockBodyScroll, unlockBodyScroll } from '@/lib/bodyScrollLock';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, X, Loader2, Trash2, Plus, Pencil, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -500,8 +501,8 @@ function SchedulePopover({
 
   // Blocca scroll del body
   useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = ''; };
+    lockBodyScroll();
+    return () => unlockBodyScroll();
   }, []);
 
   // Chiudi con Escape

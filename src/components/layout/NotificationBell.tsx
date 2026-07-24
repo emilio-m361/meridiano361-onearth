@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { lockBodyScroll, unlockBodyScroll } from '@/lib/bodyScrollLock';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { Bell, BellOff, Check, Mail, MailX, Settings, X } from 'lucide-react';
@@ -119,11 +120,9 @@ export default function NotificationBell() {
 
   useEffect(() => {
     if (open) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
+      lockBodyScroll();
+      return () => unlockBodyScroll();
     }
-    return () => { document.body.style.overflow = ''; };
   }, [open]);
 
   // Reset to unread tab when closing
