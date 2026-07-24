@@ -397,13 +397,16 @@ function AddProductModal({
     const uniq = (vals: (string | null)[]) =>
       [...new Map(vals.filter(Boolean).map((v) => [norm(v as string)!.toLowerCase(), norm(v as string)!])).values()]
         .sort((a, b) => a.localeCompare(b, 'it'));
+    const byFamiglia    = filterFamiglia    ? sourceProducts.filter((p) => norm(p.famiglia)    === filterFamiglia)    : sourceProducts;
+    const byClasse      = filterClasse      ? byFamiglia.filter((p)    => norm(p.classe)       === filterClasse)      : byFamiglia;
+    const bySottoclasse = filterSottoclasse ? byClasse.filter((p)      => norm(p.sottoclasse)  === filterSottoclasse) : byClasse;
     return {
-      famiglie:    uniq(allProducts.map((p) => p.famiglia)),
-      classi:      uniq(allProducts.map((p) => p.classe)),
-      sottoclassi: uniq(allProducts.map((p) => p.sottoclasse)),
-      colori:      uniq(allProducts.map((p) => p.colore)),
+      famiglie:    uniq(sourceProducts.map((p) => p.famiglia)),
+      classi:      uniq(byFamiglia.map((p)    => p.classe)),
+      sottoclassi: uniq(byClasse.map((p)      => p.sottoclasse)),
+      colori:      uniq(bySottoclasse.map((p) => p.colore)),
     };
-  }, [allProducts]);
+  }, [sourceProducts, filterFamiglia, filterClasse, filterSottoclasse]);
 
   const filtered = useMemo(() => {
     let list = sourceProducts;
@@ -420,16 +423,22 @@ function AddProductModal({
 
   const activeFilters = [filterFamiglia, filterClasse, filterSottoclasse, filterColore].filter(Boolean).length;
 
+  function resetFilters() {
+    setFilterFamiglia(''); setFilterClasse(''); setFilterSottoclasse(''); setFilterColore('');
+  }
   function changeTab(t: SourceTab) {
     setSourceTab(t);
+    resetFilters();
     onSourceChange?.({ tab: t, orderId: t === 'ordine' ? selectedOrderId : '', cartId: t === 'carrello' ? selectedCartId : '' });
   }
   function changeOrder(id: string) {
     setSelectedOrderId(id);
+    resetFilters();
     onSourceChange?.({ tab: 'ordine', orderId: id, cartId: '' });
   }
   function changeCart(id: string) {
     setSelectedCartId(id);
+    resetFilters();
     onSourceChange?.({ tab: 'carrello', orderId: '', cartId: id });
   }
 
@@ -605,14 +614,26 @@ function AddProductModal({
             </button>
           </div>
 
-          {/* Expanded filters */}
+          {/* Expanded filters — cascade: ogni filtro restringe le opzioni dei successivi */}
           {showFilters && (
             <div className="grid grid-cols-2 gap-2">
               {[
-                { label: 'Famiglia', value: filterFamiglia, opts: filterOptions.famiglie, set: setFilterFamiglia },
-                { label: 'Colore', value: filterColore, opts: filterOptions.colori, set: setFilterColore },
-                { label: 'Classe', value: filterClasse, opts: filterOptions.classi, set: setFilterClasse },
-                { label: 'Sottoclasse', value: filterSottoclasse, opts: filterOptions.sottoclassi, set: setFilterSottoclasse },
+                {
+                  label: 'Famiglia', value: filterFamiglia, opts: filterOptions.famiglie,
+                  set: (v: string) => { setFilterFamiglia(v); setFilterClasse(''); setFilterSottoclasse(''); setFilterColore(''); },
+                },
+                {
+                  label: 'Classe', value: filterClasse, opts: filterOptions.classi,
+                  set: (v: string) => { setFilterClasse(v); setFilterSottoclasse(''); setFilterColore(''); },
+                },
+                {
+                  label: 'Sottoclasse', value: filterSottoclasse, opts: filterOptions.sottoclassi,
+                  set: (v: string) => { setFilterSottoclasse(v); setFilterColore(''); },
+                },
+                {
+                  label: 'Colore', value: filterColore, opts: filterOptions.colori,
+                  set: setFilterColore,
+                },
               ].map(({ label, value, opts, set }) => (
                 <select key={label} value={value} onChange={(e) => set(e.target.value)}
                   className="bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:border-gray-400">

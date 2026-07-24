@@ -77,12 +77,14 @@ const GROUPING_KEYS = [
 
 type QtyMap = Record<string, number>;
 
-// Usa costoIeConReso → costoIeSenzaReso → unitPrice come fallback,
-// identico alla logica di CartItem per mostrare sempre il costo reale.
-function effectiveCost(product: any, unitPrice: number): number {
+// Usa costoIeConReso → costoIeSenzaReso → unitPrice come fallback.
+// choice sovrascrive la priorità quando il conferente ha entrambi i prezzi.
+function effectiveCost(product: any, unitPrice: number, choice?: 'con' | 'senza'): number {
   const conReso   = Number(product?.costoIeConReso);
   const senzaReso = Number(product?.costoIeSenzaReso);
-  if (conReso > 0) return conReso;
+  if (choice === 'senza' && senzaReso > 0) return senzaReso;
+  if (choice === 'con'   && conReso   > 0) return conReso;
+  if (conReso   > 0) return conReso;
   if (senzaReso > 0) return senzaReso;
   return unitPrice;
 }
@@ -588,11 +590,14 @@ function AddProductsModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ productId: product.id, quantity: qty, taglia: taglia ?? '' }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? addLabel + ' — errore');
+      }
       toast.success(`${product.code}${taglia ? ' ' + taglia : ''} ✓`);
       onAdded();
-    } catch {
-      toast.error(addLabel + ' — errore');
+    } catch (e: any) {
+      toast.error(e.message ?? addLabel + ' — errore');
     } finally {
       setAddingId(null);
     }
@@ -951,6 +956,9 @@ export default function OrderPreviewView({ id, initialTab }: { id: string; initi
   const [savingItems, setSavingItems] = useState<Set<string>>(new Set());
   const [exporting, setExporting] = useState(false);
 
+  // Key: conferente name → 'con' | 'senza'. Drives cost calculation for that supplier.
+  const [resoChoices, setResoChoices] = useState<Record<string, 'con' | 'senza'>>({});
+
   const [showDemetraInstructions, setShowDemetraInstructions] = useState(false);
   const [addProductsOpen, setAddProductsOpen] = useState(false);
   const [addingVariantCode, setAddingVariantCode] = useState<string | null>(null);
@@ -1038,10 +1046,11 @@ export default function OrderPreviewView({ id, initialTab }: { id: string; initi
         })
         .map((it) => {
           const qty      = qtyOverridesRef.current[it.id] ?? it.quantity;
-          const unitCost = effectiveCost(it.product, Number(it.unitPrice));
+          const conf     = (it.product as any)?.conferente ?? '';
+          const unitCost = effectiveCost(it.product, Number(it.unitPrice), resoChoices[conf]);
           return { ...it, effectiveQty: qty, effectiveUnitCost: unitCost, effectiveSubtotal: qty * unitCost };
         }),
-    [order?.items, qtyOverrides]  // qtyOverrides state triggers re-render; ref provides the actual values
+    [order?.items, qtyOverrides, resoChoices]  // qtyOverrides state triggers re-render; ref provides the actual values
   );
 
   // Search filter (works on top of groupBy grouping)
@@ -1554,6 +1563,43 @@ export default function OrderPreviewView({ id, initialTab }: { id: string; initi
               <span className="mx-1.5 text-gray-200">·</span>
               {items.length} art. · {grandQty} pz.
             </p>
+            {/* Per-conferente reso toggle — only when at least one supplier has both prices */}
+            {(() => {
+              type ConfEntry = { cost: number; hasResoChoice: boolean };
+              const confMap = new Map<string, ConfEntry>();
+              for (const it of items) {
+                const conf = (it.product as any)?.conferente ?? '—';
+                if (!confMap.has(conf)) confMap.set(conf, { cost: 0, hasResoChoice: false });
+                const e = confMap.get(conf)!;
+                e.cost += it.effectiveSubtotal;
+                const con = Number((it.product as any)?.costoIeConReso);
+                const senza = Number((it.product as any)?.costoIeSenzaReso);
+                if (con > 0 && senza > 0) e.hasResoChoice = true;
+              }
+              if (![...confMap.values()].some(v => v.hasResoChoice)) return null;
+              return (
+                <div className="mt-1 space-y-0.5">
+                  {[...confMap.entries()].map(([conf, data]) => {
+                    if (!data.hasResoChoice) return null;
+                    const choice = resoChoices[conf];
+                    return (
+                      <div key={conf} className="flex items-center justify-end gap-1.5">
+                        <span className="text-2xs text-gray-400 truncate max-w-[90px]">{conf}</span>
+                        <span className="text-2xs text-gray-500">{formatCurrency(data.cost)}</span>
+                        <button
+                          onClick={() => setResoChoices(p => ({ ...p, [conf]: 'con' }))}
+                          className={`text-2xs px-1.5 py-0.5 rounded transition-colors ${!choice || choice === 'con' ? 'bg-primary text-white' : 'text-gray-400 hover:text-primary'}`}
+                        >con</button>
+                        <button
+                          onClick={() => setResoChoices(p => ({ ...p, [conf]: 'senza' }))}
+                          className={`text-2xs px-1.5 py-0.5 rounded transition-colors ${choice === 'senza' ? 'bg-primary text-white' : 'text-gray-400 hover:text-primary'}`}
+                        >s/reso</button>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
             {mondiEspositivi && order.budgetPersonalizzato && !budgetEditing && (() => {
               const budget = Number(order.budgetPersonalizzato);
               const pct = Math.min(100, (grandTotal / budget) * 100);
@@ -1865,14 +1911,16 @@ export default function OrderPreviewView({ id, initialTab }: { id: string; initi
 
           {/* Actions */}
           <div className="flex items-center gap-2">
-            {/* Add products */}
-            <button
-              onClick={() => setAddProductsOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs border border-border rounded hover:bg-cream transition-colors text-gray-600 hover:text-primary flex-shrink-0"
-            >
-              <Plus size={12} />
-              <span className="hidden sm:inline">{t('addProducts')}</span>
-            </button>
+            {/* Add products — hidden for ESPORTATO orders */}
+            {order?.status !== 'ESPORTATO' && (
+              <button
+                onClick={() => setAddProductsOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs border border-border rounded hover:bg-cream transition-colors text-gray-600 hover:text-primary flex-shrink-0"
+              >
+                <Plus size={12} />
+                <span className="hidden sm:inline">{t('addProducts')}</span>
+              </button>
+            )}
 
             {/* PDF export */}
             <button

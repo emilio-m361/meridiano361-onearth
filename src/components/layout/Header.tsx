@@ -36,7 +36,8 @@ const MODA_RISORSE_ITEMS = [
 
 const MODA_VISUAL_ITEMS = [
   { href: '/moda/ruota-cromatica', label: 'Ruota Cromatica', isActive: (p: string) => p.startsWith('/moda/ruota-cromatica') },
-  { href: '/moda/pareti',          label: 'Esposizione',      isActive: (p: string) => p.startsWith('/moda/pareti') },
+  { href: '/moda/esposizione',     label: 'Esposizione',     isActive: (p: string) => p.startsWith('/moda/esposizione') },
+  { href: '/moda/pareti',          label: 'Parete',          isActive: (p: string) => p.startsWith('/moda/pareti') },
 ];
 
 interface HeaderProps {

@@ -60,6 +60,8 @@ export default function CartsView({ collection }: CartsViewProps) {
   const [convertingId, setConvertingId] = useState<string | null>(null);
   const [editingBudgetConfId, setEditingBudgetConfId] = useState<string | null>(null);
   const [budgetConfInputs, setBudgetConfInputs] = useState<Record<string, string>>({});
+  // Key: `${cartId}:${conferente}` → 'con' | 'senza'
+  const [resoChoices, setResoChoices] = useState<Record<string, 'con' | 'senza'>>({});
 
   // Copy-to-cart selection (active only while a cart is expanded)
   const [copySelection, setCopySelection] = useState<Set<string>>(new Set()); // keys: `${productId}:${taglia}`
@@ -338,10 +340,16 @@ export default function CartsView({ collection }: CartsViewProps) {
     );
   }
 
+  function getIePrice(product: Cart['items'][number]['product'], choice?: 'con' | 'senza'): number {
+    const con = Number((product as any).costoIeConReso);
+    const senza = Number((product as any).costoIeSenzaReso);
+    if (choice === 'senza' && senza > 0) return senza;
+    if (choice === 'con' && con > 0) return con;
+    return con > 0 ? con : senza > 0 ? senza : Number(product.costPrice);
+  }
+
   function effectivePrice(product: Cart['items'][number]['product']) {
-    const c = Number((product as any).costoIeConReso);
-    const s = Number((product as any).costoIeSenzaReso);
-    return c > 0 ? c : s > 0 ? s : Number(product.costPrice);
+    return getIePrice(product);
   }
 
   const totalValue = (cart: Cart) =>
@@ -578,11 +586,18 @@ export default function CartsView({ collection }: CartsViewProps) {
                     )}
                     {/* Costo per conferente — visibile subito se 2+ conferenti */}
                     {(() => {
-                      const confMap = new Map<string, { count: number; pz: number; cost: number }>();
+                      type ConfEntry = { count: number; pz: number; hasResoChoice: boolean; confItems: typeof items };
+                      const confMap = new Map<string, ConfEntry>();
                       for (const item of items) {
                         const conf = (item.product as any).conferente ?? '—';
-                        const e = confMap.get(conf) ?? { count: 0, pz: 0, cost: 0 };
-                        confMap.set(conf, { count: e.count + 1, pz: e.pz + item.quantity, cost: e.cost + effectivePrice(item.product) * item.quantity });
+                        if (!confMap.has(conf)) confMap.set(conf, { count: 0, pz: 0, hasResoChoice: false, confItems: [] });
+                        const entry = confMap.get(conf)!;
+                        entry.count += 1;
+                        entry.pz += item.quantity;
+                        entry.confItems.push(item);
+                        const con = Number((item.product as any).costoIeConReso);
+                        const senza = Number((item.product as any).costoIeSenzaReso);
+                        if (con > 0 && senza > 0) entry.hasResoChoice = true;
                       }
                       if (confMap.size <= 1) return null;
                       const isEditingBudget = editingBudgetConfId === cart.id;
@@ -628,23 +643,52 @@ export default function CartsView({ collection }: CartsViewProps) {
                               </div>
                             </div>
                           ) : (
-                            <div className="space-y-0.5">
+                            <div className="space-y-1.5">
                               {[...confMap.entries()].map(([conf, data]) => {
+                                const choiceKey = `${cart.id}:${conf}`;
+                                const choice = resoChoices[choiceKey];
+                                const cost = data.confItems.reduce((s, i) => s + getIePrice(i.product, choice) * i.quantity, 0);
+                                const revenue = data.confItems.reduce((s, i) => s + Number((i.product as any).retailPrice ?? 0) * i.quantity, 0);
+                                const margin = revenue > 0 ? Math.round((revenue - cost) / revenue * 100) : null;
                                 const bud = budgetConf[conf];
-                                const over = bud != null && data.cost > bud;
+                                const over = bud != null && cost > bud;
                                 return (
-                                  <div key={conf} className="flex items-center justify-between">
-                                    <span className="text-xs text-primary font-medium">{conf}</span>
-                                    <span className="text-2xs text-gray-500">
-                                      {data.count} art. · {data.pz} pz ·{' '}
-                                      {bud != null ? (
-                                        <span className={`font-semibold ${over ? 'text-red-500' : 'text-primary'}`}>
-                                          {formatCurrency(data.cost)} / {formatCurrency(bud)}
-                                        </span>
-                                      ) : (
-                                        <span className="font-semibold text-primary">{formatCurrency(data.cost)}</span>
-                                      )}
-                                    </span>
+                                  <div key={conf} className="space-y-0.5">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-xs text-primary font-medium">{conf}</span>
+                                      <span className="text-2xs text-gray-500">
+                                        {data.count} art. · {data.pz} pz ·{' '}
+                                        {bud != null ? (
+                                          <span className={`font-semibold ${over ? 'text-red-500' : 'text-primary'}`}>
+                                            {formatCurrency(cost)} / {formatCurrency(bud)}
+                                          </span>
+                                        ) : (
+                                          <span className="font-semibold text-primary">{formatCurrency(cost)}</span>
+                                        )}
+                                        {margin !== null && (
+                                          <span className={`ml-1 font-semibold ${margin >= 50 ? 'text-green-600' : margin >= 30 ? 'text-amber-600' : 'text-red-500'}`}>
+                                            · {margin}%
+                                          </span>
+                                        )}
+                                      </span>
+                                    </div>
+                                    {data.hasResoChoice && (
+                                      <div className="flex items-center gap-1 justify-end">
+                                        <button
+                                          onClick={() => setResoChoices(p => ({ ...p, [choiceKey]: 'con' }))}
+                                          className={`text-2xs px-1.5 py-0.5 rounded transition-colors ${!choice || choice === 'con' ? 'bg-primary text-background' : 'text-gray-400 hover:text-primary'}`}
+                                        >
+                                          con reso
+                                        </button>
+                                        <span className="text-2xs text-gray-300">/</span>
+                                        <button
+                                          onClick={() => setResoChoices(p => ({ ...p, [choiceKey]: 'senza' }))}
+                                          className={`text-2xs px-1.5 py-0.5 rounded transition-colors ${choice === 'senza' ? 'bg-primary text-background' : 'text-gray-400 hover:text-primary'}`}
+                                        >
+                                          senza reso
+                                        </button>
+                                      </div>
+                                    )}
                                   </div>
                                 );
                               })}

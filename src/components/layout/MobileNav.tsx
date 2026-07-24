@@ -59,7 +59,7 @@ const MODA_BASE: NavItem[] = [
   { icon: Heart,        label: 'Preferiti', href: '/moda/preferiti', isActive: (p) => p.startsWith('/moda/preferiti') },
   { icon: ShoppingCart, label: 'Carrelli',  href: '/moda/carrelli',  isActive: (p) => p.startsWith('/moda/carrelli') },
   { icon: Package,      label: 'Ordini',    href: '/moda/ordini',    isActive: (p) => p.startsWith('/moda/ordini') },
-  { icon: Gem,          label: 'Esposiz.',  href: '/moda/pareti',    isActive: (p) => p.startsWith('/moda/pareti') || p.startsWith('/moda/visual') },
+  { icon: Gem,          label: 'Visual',    href: '/moda/pareti',    isActive: (p) => p.startsWith('/moda/pareti') || p.startsWith('/moda/esposizione') || p.startsWith('/moda/ruota-cromatica') },
 ];
 
 const BUDGET_ITEM: NavItem = {

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { LayoutGrid, Heart, ShoppingCart, Package2, FileText, ImageIcon, Film, Clock, Lock, Palette, Layout, BarChart2 } from 'lucide-react';
+import { LayoutGrid, Heart, ShoppingCart, Package2, FileText, ImageIcon, Film, Clock, Lock, Palette, Layout, BarChart2, Gem } from 'lucide-react';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useSession } from 'next-auth/react';
 import { isAdminRole } from '@/lib/roles';
@@ -92,10 +92,11 @@ export default function ModaHome() {
         <ContentCard href="/moda/risorse?tab=video"     icon={Film}      label="Video"     />
       </div>
 
-      {/* Ruota cromatica sempre; Esposizione solo per org autorizzate */}
-      <div className={`grid gap-3 mt-3 ${showVisual ? 'grid-cols-2' : 'grid-cols-1'}`}>
+      {/* Ruota cromatica sempre; Esposizione e Parete solo per org autorizzate */}
+      <div className={`grid gap-3 mt-3 ${showVisual ? 'grid-cols-3' : 'grid-cols-1'}`}>
         <NavCard href="/moda/ruota-cromatica" icon={Palette} label="Ruota Cromatica" />
-        {showVisual && <NavCard href="/moda/pareti" icon={Layout} label="Esposizione" />}
+        {showVisual && <NavCard href="/moda/esposizione" icon={Gem}    label="Esposizione" />}
+        {showVisual && <NavCard href="/moda/pareti"      icon={Layout} label="Parete"      />}
       </div>
 
       {/* Budget solo per Meridiano361 */}

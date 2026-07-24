@@ -12,9 +12,14 @@ UPDATE "budget_scenario_meta"
 -- 3. Drop old unique constraint (orgId, seasonCode) and add (orgId, seasonCode, nome)
 ALTER TABLE "budget_scenario_meta"
   DROP CONSTRAINT IF EXISTS "budget_scenario_meta_organizationId_seasonCode_key";
-ALTER TABLE "budget_scenario_meta"
-  ADD CONSTRAINT "budget_scenario_meta_org_season_nome_key"
-  UNIQUE ("organizationId", "seasonCode", "nome");
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'budget_scenario_meta_org_season_nome_key') THEN
+    ALTER TABLE "budget_scenario_meta"
+      ADD CONSTRAINT "budget_scenario_meta_org_season_nome_key"
+      UNIQUE ("organizationId", "seasonCode", "nome");
+  END IF;
+END $$;
 
 -- 4. Add scenario_id to data tables (nullable first for migration)
 ALTER TABLE "budget_settori"       ADD COLUMN IF NOT EXISTS "scenario_id" TEXT;
@@ -59,18 +64,25 @@ ALTER TABLE "budget_settori"       ALTER COLUMN "scenario_id" SET NOT NULL;
 ALTER TABLE "budget_family_inputs" ALTER COLUMN "scenario_id" SET NOT NULL;
 ALTER TABLE "budget_subclass_data" ALTER COLUMN "scenario_id" SET NOT NULL;
 
--- 8. Add FK constraints
-ALTER TABLE "budget_settori"
-  ADD CONSTRAINT "budget_settori_scenario_id_fkey"
-  FOREIGN KEY ("scenario_id") REFERENCES "budget_scenario_meta"("id") ON DELETE CASCADE;
-
-ALTER TABLE "budget_family_inputs"
-  ADD CONSTRAINT "budget_family_inputs_scenario_id_fkey"
-  FOREIGN KEY ("scenario_id") REFERENCES "budget_scenario_meta"("id") ON DELETE CASCADE;
-
-ALTER TABLE "budget_subclass_data"
-  ADD CONSTRAINT "budget_subclass_data_scenario_id_fkey"
-  FOREIGN KEY ("scenario_id") REFERENCES "budget_scenario_meta"("id") ON DELETE CASCADE;
+-- 8. Add FK constraints (idempotent)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'budget_settori_scenario_id_fkey') THEN
+    ALTER TABLE "budget_settori"
+      ADD CONSTRAINT "budget_settori_scenario_id_fkey"
+      FOREIGN KEY ("scenario_id") REFERENCES "budget_scenario_meta"("id") ON DELETE CASCADE;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'budget_family_inputs_scenario_id_fkey') THEN
+    ALTER TABLE "budget_family_inputs"
+      ADD CONSTRAINT "budget_family_inputs_scenario_id_fkey"
+      FOREIGN KEY ("scenario_id") REFERENCES "budget_scenario_meta"("id") ON DELETE CASCADE;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'budget_subclass_data_scenario_id_fkey') THEN
+    ALTER TABLE "budget_subclass_data"
+      ADD CONSTRAINT "budget_subclass_data_scenario_id_fkey"
+      FOREIGN KEY ("scenario_id") REFERENCES "budget_scenario_meta"("id") ON DELETE CASCADE;
+  END IF;
+END $$;
 
 -- 9. Drop old unique constraints on data tables
 ALTER TABLE "budget_settori"
@@ -88,15 +100,22 @@ ALTER TABLE "budget_subclass_data"
 ALTER TABLE "budget_subclass_data"
   DROP CONSTRAINT IF EXISTS "budget_subclass_data_organizationId_seasonCode_famiglia_sottoc_key";
 
--- 10. Add new unique constraints keyed by scenarioId
-ALTER TABLE "budget_settori"
-  ADD CONSTRAINT "budget_settori_scenario_id_nome_key"
-  UNIQUE ("scenario_id", "nome");
-
-ALTER TABLE "budget_family_inputs"
-  ADD CONSTRAINT "budget_family_inputs_scenario_id_famiglia_key"
-  UNIQUE ("scenario_id", "famiglia");
-
-ALTER TABLE "budget_subclass_data"
-  ADD CONSTRAINT "budget_subclass_data_scenario_id_famiglia_sottoclasse_key"
-  UNIQUE ("scenario_id", "famiglia", "sottoclasse");
+-- 10. Add new unique constraints keyed by scenarioId (idempotent)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'budget_settori_scenario_id_nome_key') THEN
+    ALTER TABLE "budget_settori"
+      ADD CONSTRAINT "budget_settori_scenario_id_nome_key"
+      UNIQUE ("scenario_id", "nome");
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'budget_family_inputs_scenario_id_famiglia_key') THEN
+    ALTER TABLE "budget_family_inputs"
+      ADD CONSTRAINT "budget_family_inputs_scenario_id_famiglia_key"
+      UNIQUE ("scenario_id", "famiglia");
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'budget_subclass_data_scenario_id_famiglia_sottoclasse_key') THEN
+    ALTER TABLE "budget_subclass_data"
+      ADD CONSTRAINT "budget_subclass_data_scenario_id_famiglia_sottoclasse_key"
+      UNIQUE ("scenario_id", "famiglia", "sottoclasse");
+  END IF;
+END $$;
