@@ -1,4 +1,4 @@
-// AGGIORNATO: 2026-07-24 (fix coerenza scelta reso tra ordini e anteprima; fix navigazione ordini↔visual layout)
+// AGGIORNATO: 2026-07-24 (fix coerenza scelta reso; fix navigazione ordini↔visual; fix codici taglia export Demetra)
 
 import {
   LogIn, BookOpen, Heart, ShoppingBag, ShoppingCart, MapPin, Package,

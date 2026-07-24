@@ -70,7 +70,7 @@ type FlatProduct = {
   retailPrice: number;
 };
 
-type ItemRow = { product: FlatProduct; quantity: number };
+type ItemRow = { product: FlatProduct; quantity: number; taglia: string };
 
 function effectiveCost(p: FlatProduct): number {
   return (p.costoIeConReso ?? 0) > 0 ? p.costoIeConReso!
@@ -140,8 +140,9 @@ function buildGroupingSheet(ws: ExcelJS.Worksheet, items: ItemRow[], key: string
       const bg      = idx % 2 === 0 ? C.white : C.lgray;
       const unitCost = effectiveCost(item.product);
       const subtotal = item.quantity * unitCost;
+      const code = item.taglia ? `${item.product.code}${item.taglia}` : item.product.code;
       const row = ws.addRow([
-        item.product.code,
+        code,
         item.product.name,
         item.product.produttore    ?? '',
         item.product.paese         ?? '',
@@ -308,6 +309,7 @@ export async function GET(
           retailPrice:      Number(it.product!.retailPrice),
         },
         quantity: it.quantity,
+        taglia: (it as any).taglia ?? '',
       }));
 
     // Build filename: Ordine-SHORTID-OrgName-YYYY-MM-DD.xlsx

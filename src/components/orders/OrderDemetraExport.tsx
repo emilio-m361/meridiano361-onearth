@@ -97,6 +97,11 @@ export default function OrderDemetraExport({ order, onExported }: Props) {
     if (hideTimer.current) clearTimeout(hideTimer.current);
   }
 
+  function itemCode(it: typeof items[number]) {
+    const base = it.product?.code ?? '';
+    return it.taglia ? `${base}${it.taglia}` : base;
+  }
+
   async function handleCSV(e: React.MouseEvent, filter?: { field: 'tranche' | 'conferente'; value: string }) {
     e.stopPropagation();
     setPos(null);
@@ -105,7 +110,7 @@ export default function OrderDemetraExport({ order, onExported }: Props) {
       : items;
     const lines = [
       'Codice;Quantità',
-      ...filtered.map((it) => `${it.product?.code ?? ''};${it.quantity}`),
+      ...filtered.map((it) => `${itemCode(it)};${it.quantity}`),
     ];
     const filename = filter
       ? `Demetra-${shortId}-${filter.value}.csv`
@@ -125,7 +130,7 @@ export default function OrderDemetraExport({ order, onExported }: Props) {
       const XLSX = await import('xlsx');
       const rows = [
         ['Codice', 'Quantità'],
-        ...items.map((it) => [it.product?.code ?? '', it.quantity]),
+        ...items.map((it) => [itemCode(it), it.quantity]),
       ];
       const ws = XLSX.utils.aoa_to_sheet(rows);
       ws['!cols'] = [{ wch: 20 }, { wch: 12 }];
