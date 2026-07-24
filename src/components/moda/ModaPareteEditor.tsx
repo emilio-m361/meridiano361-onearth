@@ -341,9 +341,17 @@ function AddProductModal({
 
   const { data: ordersData, isLoading: ordersLoading } = useQuery<{ data: Order[]; total: number }>({
     queryKey: ['orders-for-visual'],
-    queryFn: () => fetch('/api/orders?my=true&limit=30').then((r) => r.json()),
+    queryFn: () => fetch('/api/orders?my=true&limit=100').then((r) => r.json()),
     staleTime: 30_000,
     enabled: sourceTab === 'ordine',
+  });
+
+  // Fetch the selected order individually to get all its items with full product data
+  const { data: selectedOrderData, isLoading: selectedOrderLoading } = useQuery<{ data: Order }>({
+    queryKey: ['order-visual-detail', selectedOrderId],
+    queryFn: () => fetch(`/api/orders/${selectedOrderId}`).then((r) => r.json()),
+    staleTime: 30_000,
+    enabled: sourceTab === 'ordine' && !!selectedOrderId,
   });
 
   const { data: continuativiData, isLoading: continuativiLoading } = useQuery<{ data: ProdottoContinuativo[] }>({
@@ -375,10 +383,10 @@ function AddProductModal({
     return new Set(cart.items.map((i) => i.productId));
   }, [carts, selectedCartId]);
 
-  // Extract products directly from order items — bypasses the 500-product limit of allProducts
+  // Extract products directly from selected order's items — bypasses allProducts 500 limit
   const orderProductsFromItems = useMemo<Product[] | null>(() => {
     if (!selectedOrderId) return null;
-    const order = orders.find((o) => o.id === selectedOrderId);
+    const order = selectedOrderData?.data;
     if (!order?.items?.length) return null;
     const seen = new Set<string>();
     const products: Product[] = [];
@@ -389,7 +397,7 @@ function AddProductModal({
       }
     }
     return products.length > 0 ? products : null;
-  }, [orders, selectedOrderId]);
+  }, [selectedOrderData, selectedOrderId]);
 
   const sourceProducts = useMemo(() => {
     let base: Product[];
@@ -543,7 +551,7 @@ function AddProductModal({
 
   const isContinuativiTab = sourceTab === 'continuativi';
   const selectedCount = isContinuativiTab ? selectedConts.size : selected.size;
-  const isLoading = productsLoading || (sourceTab === 'carrello' && cartsLoading) || (sourceTab === 'ordine' && ordersLoading);
+  const isLoading = productsLoading || (sourceTab === 'carrello' && cartsLoading) || (sourceTab === 'ordine' && (ordersLoading || (!!selectedOrderId && selectedOrderLoading)));
 
   const tabLabel = (t: SourceTab) => ({ tutti: 'Tutti', carrello: 'Carrello', ordine: 'Ordine', continuativi: 'Continuativi' }[t]);
 
