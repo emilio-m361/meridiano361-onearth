@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -957,7 +957,21 @@ export default function OrderPreviewView({ id, initialTab }: { id: string; initi
   const [exporting, setExporting] = useState(false);
 
   // Key: conferente name → 'con' | 'senza'. Drives cost calculation for that supplier.
-  const [resoChoices, setResoChoices] = useState<Record<string, 'con' | 'senza'>>({});
+  // Initialized from and synced to localStorage (same key/structure as CustomerOrdersView).
+  const [resoChoices, setResoChoices] = useState<Record<string, 'con' | 'senza'>>(() => {
+    try {
+      const all = JSON.parse(localStorage.getItem('reso-choices') ?? '{}');
+      return (all[id] ?? {}) as Record<string, 'con' | 'senza'>;
+    } catch { return {}; }
+  });
+
+  useEffect(() => {
+    try {
+      const all = JSON.parse(localStorage.getItem('reso-choices') ?? '{}');
+      all[id] = resoChoices;
+      localStorage.setItem('reso-choices', JSON.stringify(all));
+    } catch {}
+  }, [id, resoChoices]);
 
   const [showDemetraInstructions, setShowDemetraInstructions] = useState(false);
   const [addProductsOpen, setAddProductsOpen] = useState(false);

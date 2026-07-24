@@ -1,4 +1,4 @@
-// AGGIORNATO: 2026-07-23 (fix aggiunta prodotti in Modifica Anteprima; normalizzazione tassonomie)
+// AGGIORNATO: 2026-07-24 (fix coerenza scelta reso tra ordini e anteprima; fix navigazione ordini↔visual layout)
 
 import {
   LogIn, BookOpen, Heart, ShoppingBag, ShoppingCart, MapPin, Package,

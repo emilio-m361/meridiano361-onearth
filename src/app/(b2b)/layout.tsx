@@ -1,12 +1,12 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
-import { headers } from 'next/headers';
 import { authOptions } from '@/lib/auth';
 import { getPreviewFromSession } from '@/lib/preview';
 import { prisma } from '@/lib/prisma';
 import Header from '@/components/layout/Header';
 import CartSidebarConditional from '@/components/cart/CartSidebarConditional';
 import MobileNav from '@/components/layout/MobileNav';
+import B2BMainWrapper from '@/components/layout/B2BMainWrapper';
 import PreviewBanner from '@/components/layout/PreviewBanner';
 import { PreviewProvider } from '@/contexts/PreviewContext';
 import { SettingsProvider } from '@/contexts/SettingsContext';
@@ -20,9 +20,6 @@ const CATALOG_FONT_MAP: Record<string, string> = {
   montserrat: "'Montserrat', 'Helvetica Neue', Helvetica, Arial, sans-serif",
   lato: "'Lato', 'Helvetica Neue', Helvetica, Arial, sans-serif",
 };
-
-// Paths where <main> must be overflow-hidden (child manages its own scroll)
-const MAIN_CONTAINED_PATHS = ['/moda/pareti', '/moda/visual', '/catalog/products', '/moda/catalogo', '/moda/ruota-cromatica', '/moda/product'];
 
 export default async function B2BLayout({
   children,
@@ -48,9 +45,6 @@ export default async function B2BLayout({
   // Catalog font for web interface
   const catalogFontKey = settingsRecords.find((r) => r.chiave === 'catalogo.font')?.valore ?? 'inter';
   const catalogFontFamily = CATALOG_FONT_MAP[catalogFontKey] ?? CATALOG_FONT_MAP.inter;
-
-  const pathname = headers().get('x-pathname') ?? '';
-  const mainContained = MAIN_CONTAINED_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'));
 
   const previewData = getPreviewFromSession(session);
   const previewInfo = previewData
@@ -83,13 +77,9 @@ export default async function B2BLayout({
           <Header session={session} />
 
           <div className="flex flex-1 min-h-0 overflow-hidden">
-            <main className={`flex-1 min-h-0 overscroll-y-contain ${mainContained ? 'overflow-hidden' : 'overflow-y-auto'}`}>
-              {mainContained ? children : (
-                <div className="min-h-full pb-nav-safe md:pb-0">
-                  {children}
-                </div>
-              )}
-            </main>
+            <B2BMainWrapper>
+              {children}
+            </B2BMainWrapper>
 
             <CartSidebarConditional />
           </div>
