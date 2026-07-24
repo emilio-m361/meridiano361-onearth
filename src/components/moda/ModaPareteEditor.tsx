@@ -1828,8 +1828,8 @@ function WallRenderer({
             <div
               key={el.id}
               ref={(node) => { node ? outerDivRefs.current.set(el.id, node) : outerDivRefs.current.delete(el.id); }}
-              className="flex-shrink-0 select-none" style={{ height: WALL_SQUARES_H * GRID_SQ }}
-              style={{ transform: `translateX(${el.offsetX ?? 0}px)`, pointerEvents: 'none' }}
+              className="flex-shrink-0 select-none"
+              style={{ height: WALL_SQUARES_H * GRID_SQ, transform: `translateX(${el.offsetX ?? 0}px)`, pointerEvents: 'none' }}
             >
               <div
                 ref={(node) => { node ? innerDivRefs.current.set(el.id, node) : innerDivRefs.current.delete(el.id); }}
