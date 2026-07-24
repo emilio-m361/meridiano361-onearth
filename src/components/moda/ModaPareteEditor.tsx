@@ -183,8 +183,9 @@ function productImageUrl(p: Product): string | undefined {
 // Returns true if the product is a clothing item (valid for barra appenderia)
 const ACCESSORY_REGEX = /bijou|bigiotteria|gioiell|collana|bracciale|orecchino|anello|spilla|pendente|charm|borsa|bag|clutch|tote|shopper|zaino|backpack|bauletto|pochette|marsupio|foulard|sciarpa|stola|cintura|cappello|guanti|occhiali|belt|hat|scarf|portafoglio|wallet/;
 function isAbbigliamento(p: Product): boolean {
-  const all = [(p.famiglia ?? ''), (p.sottofamiglia ?? ''), p.name].join(' ').toLowerCase();
-  return !ACCESSORY_REGEX.test(all);
+  // Check only famiglia/sottofamiglia to avoid false positives on product names (e.g. "pantalone con cintura")
+  const fam = [(p.famiglia ?? ''), (p.sottofamiglia ?? '')].join(' ').toLowerCase();
+  return !ACCESSORY_REGEX.test(fam);
 }
 
 function tipoFromProduct(p: Product, elementoTipo: TipoElementoParete): TipoCapo {
@@ -437,8 +438,11 @@ function AddProductModal({
       list = list.filter((p) => formatProductName(p).toLowerCase().includes(q));
     }
     if (filterFamiglia) list = list.filter((p) => norm(p.famiglia) === filterFamiglia);
-    if (filterClasse) list = list.filter((p) => norm(p.classe) === filterClasse);
-    if (filterSottoclasse) list = list.filter((p) => norm(p.sottoclasse) === filterSottoclasse);
+    // When colore is selected, classe/sottoclasse are navigation aids only — don't restrict the list
+    if (!filterColore) {
+      if (filterClasse) list = list.filter((p) => norm(p.classe) === filterClasse);
+      if (filterSottoclasse) list = list.filter((p) => norm(p.sottoclasse) === filterSottoclasse);
+    }
     if (filterColore) list = list.filter((p) => norm(p.colore) === filterColore);
     return list.slice(0, 200);
   }, [sourceProducts, search, filterFamiglia, filterClasse, filterSottoclasse, filterColore]);
