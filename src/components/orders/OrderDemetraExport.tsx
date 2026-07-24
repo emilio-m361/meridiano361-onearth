@@ -98,8 +98,10 @@ export default function OrderDemetraExport({ order, onExported }: Props) {
   }
 
   function itemCode(it: typeof items[number]) {
-    const base = it.product?.code ?? '';
-    return it.taglia ? `${base}${it.taglia}` : base;
+    if (!it.taglia) return it.product?.code ?? '';
+    const sv = (it.product as any)?.sizeVariants as { taglia: string; codice: string }[] | null | undefined;
+    const match = sv?.find((v) => v.taglia === it.taglia);
+    return match?.codice ?? `${it.product?.code ?? ''}${it.taglia}`;
   }
 
   async function handleCSV(e: React.MouseEvent, filter?: { field: 'tranche' | 'conferente'; value: string }) {

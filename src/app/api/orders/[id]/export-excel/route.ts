@@ -68,6 +68,7 @@ type FlatProduct = {
   costoIeConReso: number | null;
   costoIeSenzaReso: number | null;
   retailPrice: number;
+  sizeVariants: { taglia: string; codice: string }[] | null;
 };
 
 type ItemRow = { product: FlatProduct; quantity: number; taglia: string };
@@ -140,7 +141,8 @@ function buildGroupingSheet(ws: ExcelJS.Worksheet, items: ItemRow[], key: string
       const bg      = idx % 2 === 0 ? C.white : C.lgray;
       const unitCost = effectiveCost(item.product);
       const subtotal = item.quantity * unitCost;
-      const code = item.taglia ? `${item.product.code}${item.taglia}` : item.product.code;
+      const sv = item.product.sizeVariants?.find((v) => v.taglia === item.taglia);
+      const code = sv?.codice ?? (item.taglia ? `${item.product.code}${item.taglia}` : item.product.code);
       const row = ws.addRow([
         code,
         item.product.name,
