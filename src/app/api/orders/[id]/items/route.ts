@@ -28,15 +28,9 @@ export async function POST(
       if (order.organizationId !== session.user.organizationId) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
-      if (order.status === 'ESPORTATO') {
-        return NextResponse.json({ error: 'Non puoi modificare un ordine esportato' }, { status: 403 });
-      }
     } else if (session.user.role === 'CUSTOMER') {
       if (order.customerId !== session.user.id) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      }
-      if (order.status === 'ESPORTATO') {
-        return NextResponse.json({ error: 'Non puoi modificare un ordine esportato' }, { status: 403 });
       }
     }
 

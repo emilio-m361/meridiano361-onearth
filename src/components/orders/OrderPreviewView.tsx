@@ -1826,7 +1826,7 @@ export default function OrderPreviewView({ id, initialTab }: { id: string; initi
                       product={firstProduct}
                       onQtyChange={handleQtyChange}
                       onRemove={handleRemove}
-                      onAddVariant={order?.status !== 'ESPORTATO' ? handleAddVariant : undefined}
+                      onAddVariant={handleAddVariant}
                       onViewAnagrafica={setAnagraficaProduct}
                       addingVariantCode={addingVariantCode}
                       savingItems={savingItems}
@@ -1911,16 +1911,14 @@ export default function OrderPreviewView({ id, initialTab }: { id: string; initi
 
           {/* Actions */}
           <div className="flex items-center gap-2">
-            {/* Add products — hidden for ESPORTATO orders */}
-            {order?.status !== 'ESPORTATO' && (
-              <button
-                onClick={() => setAddProductsOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-2 text-xs border border-border rounded hover:bg-cream transition-colors text-gray-600 hover:text-primary flex-shrink-0"
-              >
-                <Plus size={12} />
-                <span className="hidden sm:inline">{t('addProducts')}</span>
-              </button>
-            )}
+            {/* Add products */}
+            <button
+              onClick={() => setAddProductsOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-2 text-xs border border-border rounded hover:bg-cream transition-colors text-gray-600 hover:text-primary flex-shrink-0"
+            >
+              <Plus size={12} />
+              <span className="hidden sm:inline">{t('addProducts')}</span>
+            </button>
 
             {/* PDF export */}
             <button
