@@ -1,4 +1,4 @@
-CREATE TABLE "budget_scenario_meta" (
+CREATE TABLE IF NOT EXISTS "budget_scenario_meta" (
   "id"             TEXT         NOT NULL,
   "organizationId" TEXT         NOT NULL,
   "seasonCode"     TEXT         NOT NULL DEFAULT 'PE27',
@@ -12,7 +12,7 @@ CREATE TABLE "budget_scenario_meta" (
     UNIQUE ("organizationId", "seasonCode")
 );
 
-CREATE TABLE "budget_family_inputs" (
+CREATE TABLE IF NOT EXISTS "budget_family_inputs" (
   "id"                TEXT           NOT NULL,
   "organizationId"    TEXT           NOT NULL,
   "seasonCode"        TEXT           NOT NULL DEFAULT 'PE27',
@@ -33,7 +33,7 @@ CREATE TABLE "budget_family_inputs" (
     UNIQUE ("organizationId", "seasonCode", "famiglia")
 );
 
-CREATE TABLE "budget_subclass_data" (
+CREATE TABLE IF NOT EXISTS "budget_subclass_data" (
   "id"             TEXT         NOT NULL,
   "organizationId" TEXT         NOT NULL,
   "seasonCode"     TEXT         NOT NULL DEFAULT 'PE27',
