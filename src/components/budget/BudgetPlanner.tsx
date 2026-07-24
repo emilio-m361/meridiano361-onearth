@@ -411,6 +411,16 @@ export default function BudgetPlanner() {
   });
   const singleOrderData: OrderAggRow[] = singleOrderDataRaw?.data ?? [];
 
+  // All-orders aggregate (for sintesi view "Ordinato" column — includes ALL org orders)
+  const { data: allOrdersDataRaw } = useQuery<{ data: OrderAggRow[] }>({
+    queryKey: ['budget-all-orders-data'],
+    queryFn: () => fetch('/api/budget/order-data').then((r) => r.json()),
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchInterval: 30_000,
+  });
+  const allOrdersData: OrderAggRow[] = allOrdersDataRaw?.data ?? [];
+
   // Orders list for the selector
   const { data: ordersListRaw } = useQuery<{ orders: OrderSummary[] }>({
     queryKey: ['budget-orders'],
@@ -778,6 +788,12 @@ export default function BudgetPlanner() {
     return computeSummary(families, subclassRows);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subclassComputed, familyComputed]);
+
+  // Total "ordinato" for sintesi — sums ALL org orders (not just selected order)
+  const ordinatoTotaleSintesi = useMemo(
+    () => allOrdersData.reduce((s, o) => s + o.pezzi, 0),
+    [allOrdersData],
+  );
 
   // ── Scenario name save ─────────────────────────────────────────────────────
   async function saveNome() {
@@ -1561,8 +1577,8 @@ export default function BudgetPlanner() {
                 { label: 'Margine obiettivo tot.',  value: fmt(summary.margineObiettivoTotale, 0) + ' €' },
                 { label: 'Fabbisogno pezzi',      value: fmt(Math.round(summary.fabbisognoTotalePezzi)) + ' pz' },
                 { label: 'Continuativi totali',   value: fmt(summary.continuativiTotali) + ' pz' },
-                { label: 'Ordinato totale',       value: fmt(summary.ordinatoTotale) + ' pz' },
-                { label: 'Delta',                 value: (summary.delta >= 0 ? '+' : '') + fmt(summary.delta) + ' pz' },
+                { label: 'Ordinato totale',       value: fmt(ordinatoTotaleSintesi) + ' pz' },
+                { label: 'Delta', value: (() => { const d = ordinatoTotaleSintesi - Math.round(summary.fabbisognoTotalePezzi); return (d >= 0 ? '+' : '') + fmt(d) + ' pz'; })() },
               ].map(({ label, value }) => (
                 <div key={label} className="bg-white border border-border rounded-xl px-4 py-3">
                   <p className="text-2xs text-gray-400 mb-0.5">{label}</p>
@@ -1606,7 +1622,7 @@ export default function BudgetPlanner() {
                   {MODA_FAMIGLIE.map((famiglia) => {
                     const input = getFamilyInput(famiglia);
                     const comp = familyComputed[famiglia];
-                    const ordinato = singleOrderData.filter((o) => o.famiglia === famiglia).reduce((s, o) => s + o.pezzi, 0);
+                    const ordinato = allOrdersData.filter((o) => o.famiglia === famiglia).reduce((s, o) => s + o.pezzi, 0);
                     const subclasses = MODA_SUBCLASSES[famiglia as keyof typeof MODA_SUBCLASSES] ?? [];
                     const fabbisogno = subclasses.reduce((sum, s) => {
                       const c = subclassComputed[`${famiglia}|${s}`];
