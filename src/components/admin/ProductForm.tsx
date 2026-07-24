@@ -751,6 +751,14 @@ export default function ProductForm({ product, initialValues, duplicateSource, o
     }
   }
 
+  function applyConResoRatio(newSenzaReso: number) {
+    const oldSenza = parseFloat(String(getValues('costoIeSenzaReso') || ''));
+    const oldCon   = parseFloat(String(getValues('costoIeConReso')   || ''));
+    if (oldSenza > 0 && oldCon > 0 && newSenzaReso > 0) {
+      setValue('costoIeConReso', (newSenzaReso * (oldCon / oldSenza)).toFixed(2));
+    }
+  }
+
   function handleRetailChange(e: React.ChangeEvent<HTMLInputElement>) {
     retailPriceReg.onChange(e);
     const newRetail = parseFloat(e.target.value);
@@ -758,6 +766,7 @@ export default function ProductForm({ product, initialValues, duplicateSource, o
     if (!isNaN(sconto) && !isNaN(newRetail) && newRetail > 0) {
       const newPvn  = newRetail / (1 + ivaNum / 100);
       const newCost = Math.max(0, newPvn * (1 - sconto / 100));
+      applyConResoRatio(newCost);
       setValue('costPrice', newCost.toFixed(2));
       setValue('costoIeSenzaReso', newCost.toFixed(2));
       if (newCost > 0) setValue('fasciaRicarico', ((newPvn - newCost) / newCost * 100).toFixed(1));
@@ -771,6 +780,7 @@ export default function ProductForm({ product, initialValues, duplicateSource, o
     if (!isNaN(sconto) && retailNum > 0) {
       const newPvn  = retailNum / (1 + newIva / 100);
       const newCost = Math.max(0, newPvn * (1 - sconto / 100));
+      applyConResoRatio(newCost);
       setValue('costPrice', newCost.toFixed(2));
       setValue('costoIeSenzaReso', newCost.toFixed(2));
       if (newCost > 0) setValue('fasciaRicarico', ((newPvn - newCost) / newCost * 100).toFixed(1));
