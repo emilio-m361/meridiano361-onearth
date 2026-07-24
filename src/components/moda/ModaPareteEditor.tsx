@@ -375,21 +375,35 @@ function AddProductModal({
     return new Set(cart.items.map((i) => i.productId));
   }, [carts, selectedCartId]);
 
-  const orderProductIds = useMemo<Set<string> | null>(() => {
+  // Extract products directly from order items — bypasses the 500-product limit of allProducts
+  const orderProductsFromItems = useMemo<Product[] | null>(() => {
     if (!selectedOrderId) return null;
     const order = orders.find((o) => o.id === selectedOrderId);
     if (!order?.items?.length) return null;
-    return new Set(order.items.map((i) => i.productId));
+    const seen = new Set<string>();
+    const products: Product[] = [];
+    for (const item of order.items) {
+      if (item.product && !seen.has(item.productId)) {
+        seen.add(item.productId);
+        products.push(item.product as unknown as Product);
+      }
+    }
+    return products.length > 0 ? products : null;
   }, [orders, selectedOrderId]);
 
   const sourceProducts = useMemo(() => {
-    let base = allProducts;
+    let base: Product[];
+    if (sourceTab === 'ordine' && orderProductsFromItems) {
+      base = orderProductsFromItems;
+    } else if (sourceTab === 'carrello' && cartProductIds) {
+      base = allProducts.filter((p) => cartProductIds.has(p.id));
+    } else {
+      base = allProducts;
+    }
     // Barra appenderia: only clothing — no bags, accessories, bijou
     if (elementoTipo === 'barra') base = base.filter(isAbbigliamento);
-    if (sourceTab === 'carrello' && cartProductIds) return base.filter((p) => cartProductIds.has(p.id));
-    if (sourceTab === 'ordine' && orderProductIds) return base.filter((p) => orderProductIds.has(p.id));
     return base;
-  }, [allProducts, elementoTipo, sourceTab, cartProductIds, orderProductIds]);
+  }, [allProducts, elementoTipo, sourceTab, cartProductIds, orderProductsFromItems]);
 
   const norm = (v: string | null | undefined) => v?.trim() ? capitalize(v.trim()) : null;
 
@@ -510,7 +524,8 @@ function AddProductModal({
       onClose();
       return;
     }
-    const sel = allProducts.filter((p) => selected.has(p.id));
+    const productPool = sourceTab === 'ordine' && orderProductsFromItems ? orderProductsFromItems : allProducts;
+    const sel = productPool.filter((p) => selected.has(p.id));
     const items: ItemParete[] = sel.map((p) => ({
       id: nanoid(8),
       tipo: tipoFromProduct(p, elementoTipo),
