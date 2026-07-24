@@ -1091,15 +1091,20 @@ model BudgetScenarioMeta {
   organizationId          String
   seasonCode              String   @default("PE27")
   nome                    String   @default("Budget principale")
+  sourceType              String?  @map("source_type")    // 'ORDER' | 'CART' | 'MANUAL'
+  sourceOrderId           String?  @map("source_order_id")
   obiettivoTotale         Decimal? @db.Decimal(12, 2) @map("obiettivo_totale")
   costiNegozio            Decimal? @db.Decimal(12, 2) @map("costi_negozio")
   obiettivoRicavoSviluppo Decimal? @db.Decimal(12, 2) @map("obiettivo_ricavo_sviluppo")
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 
-  organization Organization @relation("OrgBudgetMeta", fields: [organizationId], references: [id], onDelete: Cascade)
+  organization Organization      @relation("OrgBudgetMeta", fields: [organizationId], references: [id], onDelete: Cascade)
+  settori      BudgetSettore[]   @relation("ScenarioSettori")
+  familyInputs BudgetFamilyInput[] @relation("ScenarioFamilyInputs")
+  subclassData BudgetSubclassData[] @relation("ScenarioSubclassData")
 
-  @@unique([organizationId, seasonCode])
+  @@unique([organizationId, seasonCode, nome])
   @@map("budget_scenario_meta")
 }
 
@@ -1107,6 +1112,7 @@ model BudgetSettore {
   id             String   @id @default(dbgenerated("gen_random_uuid()::text"))
   organizationId String   @map("organization_id")
   seasonCode     String   @default("PE27") @map("season_code")
+  scenarioId     String   @map("scenario_id")
   nome           String
   incidenza      Decimal  @db.Decimal(5, 2)
   margine        Decimal  @db.Decimal(5, 2)
@@ -1114,9 +1120,10 @@ model BudgetSettore {
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  organization Organization @relation("OrgBudgetSettori", fields: [organizationId], references: [id], onDelete: Cascade)
+  organization Organization       @relation("OrgBudgetSettori", fields: [organizationId], references: [id], onDelete: Cascade)
+  scenario     BudgetScenarioMeta @relation("ScenarioSettori", fields: [scenarioId], references: [id], onDelete: Cascade)
 
-  @@unique([organizationId, seasonCode, nome])
+  @@unique([scenarioId, nome])
   @@map("budget_settori")
 }
 
@@ -1124,6 +1131,7 @@ model BudgetFamilyInput {
   id                String   @id @default(cuid())
   organizationId    String
   seasonCode        String   @default("PE27")
+  scenarioId        String   @map("scenario_id")
   famiglia          String
   vendutoPrevValore Decimal? @db.Decimal(12, 2)
   vendutoPrevPezzi  Int?
@@ -1135,9 +1143,10 @@ model BudgetFamilyInput {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  organization Organization @relation("OrgBudgetFamily", fields: [organizationId], references: [id], onDelete: Cascade)
+  organization Organization       @relation("OrgBudgetFamily", fields: [organizationId], references: [id], onDelete: Cascade)
+  scenario     BudgetScenarioMeta @relation("ScenarioFamilyInputs", fields: [scenarioId], references: [id], onDelete: Cascade)
 
-  @@unique([organizationId, seasonCode, famiglia])
+  @@unique([scenarioId, famiglia])
   @@map("budget_family_inputs")
 }
 
@@ -1145,6 +1154,7 @@ model BudgetSubclassData {
   id             String   @id @default(cuid())
   organizationId String
   seasonCode     String   @default("PE27")
+  scenarioId     String   @map("scenario_id")
   famiglia       String
   sottoclasse    String
   pezziPE26      Int?
@@ -1153,8 +1163,9 @@ model BudgetSubclassData {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  organization Organization @relation("OrgBudgetSubclass", fields: [organizationId], references: [id], onDelete: Cascade)
+  organization Organization       @relation("OrgBudgetSubclass", fields: [organizationId], references: [id], onDelete: Cascade)
+  scenario     BudgetScenarioMeta @relation("ScenarioSubclassData", fields: [scenarioId], references: [id], onDelete: Cascade)
 
-  @@unique([organizationId, seasonCode, famiglia, sottoclasse])
+  @@unique([scenarioId, famiglia, sottoclasse])
   @@map("budget_subclass_data")
 }

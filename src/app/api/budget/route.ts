@@ -1,6 +1,6 @@
 /**
- * GET  /api/budget  — returns (or creates) the budget scenario for the org + season.
- * PATCH /api/budget — updates meta fields (nome, obiettivoTotale, costiNegozio, obiettivoRicavoSviluppo).
+ * GET  /api/budget?scenarioId=xxx  — dati completi di uno scenario specifico
+ * PATCH /api/budget                — aggiorna campi meta (scenarioId nel body)
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
@@ -8,9 +8,9 @@ import { authOptions } from '@/lib/auth';
 import { isMeridiano361Org } from '@/lib/modaServer';
 import { prisma } from '@/lib/prisma';
 import { BUDGET_SEASON, MODA_FAMIGLIE, MODA_SUBCLASSES } from '@/lib/budget';
-import { nanoid } from 'nanoid';
 
-const FORBIDDEN = NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+const FORBIDDEN  = NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+const NOT_FOUND  = NextResponse.json({ error: 'Scenario non trovato' }, { status: 404 });
 
 async function guardBudget() {
   const session = await getServerSession(authOptions);
@@ -21,45 +21,33 @@ async function guardBudget() {
 
 function toNum(v: unknown) { return v != null ? Number(v) : null; }
 
-export async function GET(_req: NextRequest) {
+export async function GET(req: NextRequest) {
   const session = await guardBudget();
   if (!session) return FORBIDDEN;
 
-  const orgId = session.user.organizationId!;
-  const season = BUDGET_SEASON;
+  const orgId      = session.user.organizationId!;
+  const scenarioId = new URL(req.url).searchParams.get('scenarioId');
+  if (!scenarioId) return NOT_FOUND;
 
-  let meta = await prisma.budgetScenarioMeta.findUnique({
-    where: { organizationId_seasonCode: { organizationId: orgId, seasonCode: season } },
+  const meta = await prisma.budgetScenarioMeta.findFirst({
+    where: { id: scenarioId, organizationId: orgId, seasonCode: BUDGET_SEASON },
   });
-  if (!meta) {
-    meta = await prisma.budgetScenarioMeta.create({
-      data: { id: nanoid(), organizationId: orgId, seasonCode: season },
-    });
-  }
+  if (!meta) return NOT_FOUND;
 
-  const [familyInputs, subclassData] = await Promise.all([
-    prisma.budgetFamilyInput.findMany({ where: { organizationId: orgId, seasonCode: season } }),
-    prisma.budgetSubclassData.findMany({ where: { organizationId: orgId, seasonCode: season } }),
+  const [familyInputs, subclassData, settori] = await Promise.all([
+    prisma.budgetFamilyInput.findMany({ where: { scenarioId } }),
+    prisma.budgetSubclassData.findMany({ where: { scenarioId } }),
+    prisma.budgetSettore.findMany({ where: { scenarioId }, orderBy: { posizione: 'asc' } }),
   ]);
-
-  let settori = await prisma.budgetSettore.findMany({
-    where: { organizationId: orgId, seasonCode: season },
-    orderBy: { posizione: 'asc' },
-  });
-
-  if (settori.length === 0) {
-    const created = await prisma.budgetSettore.create({
-      data: { organizationId: orgId, seasonCode: season, nome: 'Moda PE27', incidenza: 0, margine: 0, posizione: 0 },
-    });
-    settori = [created];
-  }
 
   const m = meta as any;
   return NextResponse.json({
     meta: {
-      id: meta.id,
-      nome: meta.nome,
-      seasonCode: meta.seasonCode,
+      id:                      meta.id,
+      nome:                    meta.nome,
+      seasonCode:              meta.seasonCode,
+      sourceType:              m.sourceType   ?? null,
+      sourceOrderId:           m.sourceOrderId ?? null,
       obiettivoTotale:         toNum(m.obiettivoTotale),
       costiNegozio:            toNum(m.costiNegozio),
       obiettivoRicavoSviluppo: toNum(m.obiettivoRicavoSviluppo),
@@ -67,7 +55,7 @@ export async function GET(_req: NextRequest) {
     famiglie: MODA_FAMIGLIE,
     subclassesByFamiglia: MODA_SUBCLASSES,
     familyInputs: familyInputs.map((fi) => ({
-      famiglia:         fi.famiglia,
+      famiglia:          fi.famiglia,
       vendutoPrevValore: toNum(fi.vendutoPrevValore),
       vendutoPrevPezzi:  fi.vendutoPrevPezzi,
       mesiConsuntivi:    fi.mesiConsuntivi,
@@ -98,7 +86,14 @@ export async function PATCH(req: NextRequest) {
   if (!session) return FORBIDDEN;
 
   const orgId = session.user.organizationId!;
-  const body = await req.json();
+  const body  = await req.json();
+  const { scenarioId } = body;
+  if (!scenarioId) return NextResponse.json({ error: 'scenarioId mancante' }, { status: 400 });
+
+  const meta = await prisma.budgetScenarioMeta.findFirst({
+    where: { id: scenarioId, organizationId: orgId },
+  });
+  if (!meta) return NOT_FOUND;
 
   const update: Record<string, unknown> = {};
   if (typeof body.nome === 'string' && body.nome.trim()) update.nome = body.nome.trim();
@@ -108,11 +103,7 @@ export async function PATCH(req: NextRequest) {
 
   if (Object.keys(update).length === 0) return NextResponse.json({ error: 'nessun campo' }, { status: 400 });
 
-  await prisma.budgetScenarioMeta.upsert({
-    where: { organizationId_seasonCode: { organizationId: orgId, seasonCode: BUDGET_SEASON } },
-    create: { id: nanoid(), organizationId: orgId, seasonCode: BUDGET_SEASON, nome: 'Budget principale', ...update },
-    update,
-  });
+  await prisma.budgetScenarioMeta.update({ where: { id: scenarioId }, data: update });
 
   return NextResponse.json({ ok: true });
 }

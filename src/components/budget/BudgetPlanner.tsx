@@ -21,9 +21,19 @@ interface Settore {
   posizione: number;
 }
 
+interface ScenarioSummary {
+  id: string;
+  nome: string;
+  sourceType: string | null;
+  sourceOrderId: string | null;
+  createdAt: string;
+}
+
 interface ScenarioData {
   meta: {
     id: string; nome: string; seasonCode: string;
+    sourceType: string | null;
+    sourceOrderId: string | null;
     obiettivoTotale: number | null;
     costiNegozio: number | null;
     obiettivoRicavoSviluppo: number | null;
@@ -145,6 +155,173 @@ function ColTh({ label, tip, right = true }: { label: string; tip: string; right
   );
 }
 
+// ─── Setup modal ──────────────────────────────────────────────────────────────
+
+const SOURCE_LABELS: Record<string, string> = {
+  ORDER:  'Ordine esistente',
+  CART:   'Carrello in corso',
+  MANUAL: 'Libero (nessun ordine)',
+};
+
+function BudgetSetupModal({ onSelect }: { onSelect: (id: string) => void }) {
+  const [scenarios, setScenarios]     = useState<ScenarioSummary[]>([]);
+  const [orders, setOrders]           = useState<OrderSummary[]>([]);
+  const [loading, setLoading]         = useState(true);
+  const [creating, setCreating]       = useState(false);
+  const [showForm, setShowForm]       = useState(false);
+  const [nome, setNome]               = useState('');
+  const [sourceType, setSourceType]   = useState<'ORDER' | 'CART' | 'MANUAL'>('MANUAL');
+  const [sourceOrderId, setSourceOrderId] = useState('');
+
+  useEffect(() => {
+    Promise.all([
+      fetch('/api/budget/scenarios').then(r => r.json()),
+      fetch('/api/budget/orders').then(r => r.json()),
+    ]).then(([sc, ord]) => {
+      setScenarios(sc.scenarios ?? []);
+      setOrders(ord.orders ?? []);
+      if ((sc.scenarios ?? []).length === 0) setShowForm(true);
+    }).finally(() => setLoading(false));
+  }, []);
+
+  async function handleCreate() {
+    if (!nome.trim()) { toast.error('Dai un nome al budget'); return; }
+    setCreating(true);
+    try {
+      const res = await fetch('/api/budget/scenarios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome: nome.trim(), sourceType, sourceOrderId: sourceType === 'ORDER' ? sourceOrderId || null : null }),
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      onSelect(data.id);
+    } catch {
+      toast.error('Errore nella creazione del budget');
+      setCreating(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+        <Loader2 size={24} className="animate-spin text-white" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-4">
+      <div className="bg-white rounded-xl w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="p-5 space-y-4">
+          <h2 className="text-sm font-bold text-primary">Budget PE27 — Scegli o crea uno scenario</h2>
+
+          {/* Lista scenari esistenti */}
+          {scenarios.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="text-2xs text-gray-400 uppercase tracking-wider font-semibold">Scenari salvati</p>
+              {scenarios.map(sc => (
+                <button
+                  key={sc.id}
+                  onClick={() => onSelect(sc.id)}
+                  className="w-full flex items-center justify-between gap-2 border border-border rounded-lg px-3 py-2.5 hover:bg-cream hover:border-accent transition-colors text-left"
+                >
+                  <div>
+                    <p className="text-xs font-semibold text-primary">{sc.nome}</p>
+                    {sc.sourceType && sc.sourceType !== 'MANUAL' && (
+                      <p className="text-2xs text-gray-400">{SOURCE_LABELS[sc.sourceType] ?? sc.sourceType}</p>
+                    )}
+                  </div>
+                  <Check size={13} className="text-accent flex-shrink-0 opacity-0 group-hover:opacity-100" />
+                </button>
+              ))}
+              {!showForm && (
+                <button
+                  onClick={() => setShowForm(true)}
+                  className="w-full text-xs text-accent hover:text-accent/80 py-1.5 border border-dashed border-border rounded-lg transition-colors"
+                >
+                  + Crea nuovo scenario
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Form creazione */}
+          {showForm && (
+            <div className="space-y-3 border-t border-border pt-4">
+              <p className="text-2xs text-gray-400 uppercase tracking-wider font-semibold">Nuovo scenario</p>
+              <div>
+                <label className="text-2xs text-gray-500 mb-1 block">Nome budget</label>
+                <input
+                  autoFocus
+                  type="text"
+                  value={nome}
+                  onChange={e => setNome(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') handleCreate(); }}
+                  placeholder="es. Budget PE27 Cremona"
+                  className="w-full border border-border rounded-lg px-3 py-2 text-sm text-primary focus:outline-none focus:border-accent transition-colors"
+                />
+              </div>
+              <div>
+                <label className="text-2xs text-gray-500 mb-1.5 block">Basato su</label>
+                <div className="space-y-1">
+                  {(['MANUAL', 'ORDER'] as const).map(type => (
+                    <label key={type} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="sourceType"
+                        checked={sourceType === type}
+                        onChange={() => setSourceType(type)}
+                        className="accent-primary"
+                      />
+                      <span className="text-xs text-gray-700">{SOURCE_LABELS[type]}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              {sourceType === 'ORDER' && (
+                <div>
+                  <label className="text-2xs text-gray-500 mb-1 block">Seleziona ordine</label>
+                  <select
+                    value={sourceOrderId}
+                    onChange={e => setSourceOrderId(e.target.value)}
+                    className="w-full border border-border rounded-lg px-3 py-2 text-xs text-primary focus:outline-none focus:border-accent transition-colors bg-white"
+                  >
+                    <option value="">— nessuno —</option>
+                    {orders.map(o => (
+                      <option key={o.id} value={o.id}>
+                        {o.orderNumber ?? o.id.slice(0, 8).toUpperCase()} · {o.canaleNome ?? '—'} · {o.totalItems} pz
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              <div className="flex gap-2 pt-1">
+                {scenarios.length > 0 && (
+                  <button
+                    onClick={() => setShowForm(false)}
+                    className="flex-1 py-2 text-xs border border-border rounded-lg text-gray-500 hover:bg-cream transition-colors"
+                  >
+                    Annulla
+                  </button>
+                )}
+                <button
+                  onClick={handleCreate}
+                  disabled={creating || !nome.trim()}
+                  className="flex-1 py-2 text-xs bg-primary text-background rounded-lg hover:bg-warm-darker transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+                >
+                  {creating ? <Loader2 size={10} className="animate-spin" /> : <Plus size={10} />}
+                  Crea budget
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main component ────────────────────────────────────────────────────────────
 
 export default function BudgetPlanner() {
@@ -157,6 +334,19 @@ export default function BudgetPlanner() {
   const [expandedFamily, setExpandedFamily] = useState<string | null>(MODA_FAMIGLIE[0]);
   const [orderResoChoices, setOrderResoChoices] = useState<Record<string, 'con' | 'senza'>>({});
 
+  // ── Scenario selection ─────────────────────────────────────────────────────
+  const [activeScenarioId, setActiveScenarioId] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('budget-active-scenario-id');
+  });
+  const [showSetupModal, setShowSetupModal] = useState(!activeScenarioId);
+  const activeScenarioIdRef = useRef(activeScenarioId);
+
+  useEffect(() => {
+    activeScenarioIdRef.current = activeScenarioId;
+    if (activeScenarioId) localStorage.setItem('budget-active-scenario-id', activeScenarioId);
+  }, [activeScenarioId]);
+
   useEffect(() => {
     if (!selectedOrderId) { setOrderResoChoices({}); return; }
     try {
@@ -166,11 +356,34 @@ export default function BudgetPlanner() {
   }, [selectedOrderId]);
 
   // ── Queries ────────────────────────────────────────────────────────────────
-  const { data: scenario, isLoading } = useQuery<ScenarioData>({
-    queryKey: ['budget-scenario'],
-    queryFn: () => fetch('/api/budget').then((r) => r.json()),
+  const { data: scenario, isLoading, error: scenarioError } = useQuery<ScenarioData>({
+    queryKey: ['budget-scenario', activeScenarioId],
+    queryFn: async () => {
+      const res = await fetch(`/api/budget?scenarioId=${activeScenarioId}`);
+      if (res.status === 404) throw Object.assign(new Error('NOT_FOUND'), { status: 404 });
+      return res.json();
+    },
+    enabled: !!activeScenarioId,
     staleTime: 60_000,
+    retry: false,
   });
+
+  // Se lo scenario non esiste più, torna alla modale
+  useEffect(() => {
+    if ((scenarioError as any)?.status === 404) {
+      localStorage.removeItem('budget-active-scenario-id');
+      setActiveScenarioId(null);
+      setShowSetupModal(true);
+    }
+  }, [scenarioError]);
+
+  // Pre-imposta selectedOrderId dall'ordine collegato allo scenario
+  useEffect(() => {
+    if (scenario?.meta.sourceOrderId && !selectedOrderId) {
+      setSelectedOrderId(scenario.meta.sourceOrderId);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scenario?.meta.sourceOrderId]);
 
   const { data: marginiSuggeriti } = useQuery<Record<string, number | null>>({
     queryKey: ['budget-margini-suggeriti'],
@@ -314,7 +527,7 @@ export default function BudgetPlanner() {
   const saveTimer = useRef<Record<string, NodeJS.Timeout>>({});
 
   function saveObiettivoTotale(value: number | null) {
-    qc.setQueryData<ScenarioData>(['budget-scenario'], (old) =>
+    qc.setQueryData<ScenarioData>(['budget-scenario', activeScenarioId], (old) =>
       old ? { ...old, meta: { ...old.meta, obiettivoTotale: value } } : old
     );
     clearTimeout(saveTimer.current['obiettivo-totale']);
@@ -323,7 +536,7 @@ export default function BudgetPlanner() {
         const res = await fetch('/api/budget', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ obiettivoTotale: value }),
+          body: JSON.stringify({ scenarioId: activeScenarioIdRef.current, obiettivoTotale: value }),
         });
         if (!res.ok) throw new Error();
         setLocalObiettivoTotale(undefined);
@@ -338,7 +551,7 @@ export default function BudgetPlanner() {
     pendingMetaRef.current[field] = value;
     hasPendingMetaSave.current = true;
 
-    qc.setQueryData<ScenarioData>(['budget-scenario'], (old) =>
+    qc.setQueryData<ScenarioData>(['budget-scenario', activeScenarioId], (old) =>
       old ? { ...old, meta: { ...old.meta, [field]: value } } : old
     );
     clearTimeout(saveTimer.current[`meta-${field}`]);
@@ -347,7 +560,7 @@ export default function BudgetPlanner() {
         const res = await fetch('/api/budget', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ [field]: value }),
+          body: JSON.stringify({ scenarioId: activeScenarioIdRef.current, [field]: value }),
         });
         if (!res.ok) throw new Error();
         delete pendingMetaRef.current[field];
@@ -363,7 +576,7 @@ export default function BudgetPlanner() {
     hasPendingSettoriSave.current = true;
 
     // Optimistic: update the cache immediately so navigating away and back shows the correct data.
-    qc.setQueryData<ScenarioData>(['budget-scenario'], (old) =>
+    qc.setQueryData<ScenarioData>(['budget-scenario', activeScenarioId], (old) =>
       old ? { ...old, settori: rows } : old
     );
 
@@ -373,7 +586,7 @@ export default function BudgetPlanner() {
         const res = await fetch('/api/budget/settori', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ rows: rows.map((r, i) => ({ ...r, posizione: i })) }),
+          body: JSON.stringify({ scenarioId: activeScenarioIdRef.current, rows: rows.map((r, i) => ({ ...r, posizione: i })) }),
         });
         if (!res.ok) throw new Error();
         hasPendingSettoriSave.current = false;
@@ -386,27 +599,29 @@ export default function BudgetPlanner() {
   // Flush any pending saves immediately when navigating away
   useEffect(() => {
     return () => {
+      const sid = activeScenarioIdRef.current;
       // Flush settori
-      if (hasPendingSettoriSave.current && latestSettoriRef.current) {
+      if (sid && hasPendingSettoriSave.current && latestSettoriRef.current) {
         clearTimeout(saveTimer.current['settori']);
         fetch('/api/budget/settori', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            scenarioId: sid,
             rows: latestSettoriRef.current.map((r, i) => ({ ...r, posizione: i })),
           }),
           keepalive: true,
         }).catch(() => {});
       }
       // Flush meta fields (costiNegozio, obiettivoRicavoSviluppo)
-      if (hasPendingMetaSave.current && Object.keys(pendingMetaRef.current).length > 0) {
+      if (sid && hasPendingMetaSave.current && Object.keys(pendingMetaRef.current).length > 0) {
         for (const field of Object.keys(pendingMetaRef.current)) {
           clearTimeout(saveTimer.current[`meta-${field}`]);
         }
         fetch('/api/budget', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(pendingMetaRef.current),
+          body: JSON.stringify({ scenarioId: sid, ...pendingMetaRef.current }),
           keepalive: true,
         }).catch(() => {});
       }
@@ -428,7 +643,7 @@ export default function BudgetPlanner() {
         const res = await fetch('/api/budget/family-inputs', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ famiglia, [field]: value }),
+          body: JSON.stringify({ scenarioId: activeScenarioIdRef.current, famiglia, [field]: value }),
         });
         if (!res.ok) throw new Error(String(res.status));
         const updated: FamilyInput = await res.json();
@@ -468,7 +683,7 @@ export default function BudgetPlanner() {
         const res = await fetch('/api/budget/subclass-data', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ famiglia, sottoclasse, [field]: value }),
+          body: JSON.stringify({ scenarioId: activeScenarioIdRef.current, famiglia, sottoclasse, [field]: value }),
         });
         if (!res.ok) throw new Error(String(res.status));
         const updated: SubclassRow = await res.json();
@@ -563,12 +778,11 @@ export default function BudgetPlanner() {
     const res = await fetch('/api/budget', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nome: nomeInput }),
+      body: JSON.stringify({ scenarioId: activeScenarioId, nome: nomeInput }),
     });
     if (res.ok) {
       toast.success('Scenario aggiornato');
-      // Update cache directly to avoid overwriting pending settori edits
-      qc.setQueryData<ScenarioData>(['budget-scenario'], (old) =>
+      qc.setQueryData<ScenarioData>(['budget-scenario', activeScenarioId], (old) =>
         old ? { ...old, meta: { ...old.meta, nome: nomeInput } } : old
       );
     } else {
@@ -578,6 +792,20 @@ export default function BudgetPlanner() {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
+  if (!activeScenarioId || showSetupModal) {
+    return (
+      <div className="min-h-screen bg-[#faf8f5]">
+        <BudgetSetupModal
+          onSelect={(id) => {
+            setActiveScenarioId(id);
+            setShowSetupModal(false);
+            qc.invalidateQueries({ queryKey: ['budget-scenario'] });
+          }}
+        />
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#faf8f5] flex items-center justify-center">
@@ -595,7 +823,15 @@ export default function BudgetPlanner() {
       <div className="sticky top-0 z-10 bg-[#faf8f5]/95 backdrop-blur-sm border-b border-border px-4 py-3">
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex-1 min-w-0">
-            <p className="text-2xs text-gray-400 uppercase tracking-widest">Budget</p>
+            <div className="flex items-center gap-2">
+              <p className="text-2xs text-gray-400 uppercase tracking-widest">Budget</p>
+              <button
+                onClick={() => setShowSetupModal(true)}
+                className="text-2xs text-accent hover:text-accent/80 transition-colors"
+              >
+                Cambia
+              </button>
+            </div>
             {editingNome ? (
               <div className="flex items-center gap-2 mt-0.5">
                 <input

@@ -1,6 +1,6 @@
 /**
  * PATCH /api/budget/subclass-data
- * Body: { famiglia, sottoclasse, pezziPE26?, valorePE26?, continuativi? }
+ * Body: { scenarioId, famiglia, sottoclasse, pezziPE26?, valorePE26?, continuativi? }
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
@@ -20,11 +20,19 @@ export async function PATCH(req: NextRequest) {
 
   const orgId = session.user.organizationId!;
   const body = await req.json();
-  const { famiglia, sottoclasse } = body;
+  const { scenarioId, famiglia, sottoclasse } = body;
 
+  if (!scenarioId) return NextResponse.json({ error: 'scenarioId mancante' }, { status: 400 });
   if (!famiglia || !sottoclasse) {
     return NextResponse.json({ error: 'famiglia e sottoclasse richiesti' }, { status: 400 });
   }
+
+  // Verify ownership
+  const meta = await prisma.budgetScenarioMeta.findFirst({
+    where: { id: scenarioId, organizationId: orgId },
+    select: { id: true },
+  });
+  if (!meta) return NextResponse.json({ error: 'Scenario non trovato' }, { status: 404 });
 
   function intOrNull(v: unknown): number | null {
     if (v === null || v === undefined || v === '') return null;
@@ -38,20 +46,16 @@ export async function PATCH(req: NextRequest) {
   if ('continuativi' in body) data.continuativi = intOrNull(body.continuativi) ?? 0;
 
   const row = await prisma.budgetSubclassData.upsert({
-    where: {
-      organizationId_seasonCode_famiglia_sottoclasse: {
-        organizationId: orgId, seasonCode: BUDGET_SEASON, famiglia, sottoclasse,
-      },
-    },
-    create: { id: nanoid(), organizationId: orgId, seasonCode: BUDGET_SEASON, famiglia, sottoclasse, ...data },
+    where: { scenarioId_famiglia_sottoclasse: { scenarioId, famiglia, sottoclasse } },
+    create: { id: nanoid(), organizationId: orgId, seasonCode: BUDGET_SEASON, scenarioId, famiglia, sottoclasse, ...data },
     update: data,
   });
 
   return NextResponse.json({
-    famiglia: row.famiglia,
+    famiglia:    row.famiglia,
     sottoclasse: row.sottoclasse,
-    pezziPE26: row.pezziPE26,
-    valorePE26: row.valorePE26 != null ? Number(row.valorePE26) : null,
+    pezziPE26:   row.pezziPE26,
+    valorePE26:  row.valorePE26 != null ? Number(row.valorePE26) : null,
     continuativi: row.continuativi,
   });
 }
