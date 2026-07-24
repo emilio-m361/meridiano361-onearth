@@ -367,6 +367,8 @@ export default function ProductForm({ product, initialValues, duplicateSource, o
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
 
+  const [noLinea, setNoLinea] = useState(false);
+
   const [fotoPicker, setFotoPicker] = useState<{
     slot: 'imageUrl' | 'imageUrl2' | 'imageUrl3' | 'imageUrl4' | 'imageUrl5' | null;
     options: { url: string; name: string }[];
@@ -869,7 +871,7 @@ export default function ProductForm({ product, initialValues, duplicateSource, o
     if (isModaProduct) {
       const missing: string[] = [];
       if (!(v as any).dettaglio?.trim())  missing.push('Tipo');
-      if (!v.nomLinea?.trim())             missing.push('Linea');
+      if (!noLinea && !v.nomLinea?.trim())  missing.push('Linea');
       if (!(v as any).materiale1?.trim()) missing.push('Materiale 1');
       if (!v.colore?.trim())              missing.push('Colore');
       if (v.famiglia === 'Abbigliamento' && sizeVariants.length === 0 && !(v as any).taglia?.trim()) missing.push('Taglia');
@@ -1048,7 +1050,13 @@ export default function ProductForm({ product, initialValues, duplicateSource, o
       {isModa && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Combobox label="Tipo *" field="dettaglio" value={watch('dettaglio') || ''} onChange={(v) => setValue('dettaglio', v)} />
-          <Combobox label="Linea *"   field="nomLinea"   value={watch('nomLinea') || ''}   onChange={(v) => setValue('nomLinea', v)} />
+          <div className="space-y-1">
+            <Combobox label={noLinea ? 'Linea' : 'Linea *'} field="nomLinea" value={watch('nomLinea') || ''} onChange={(v) => setValue('nomLinea', v)} disabled={noLinea} />
+            <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer select-none">
+              <input type="checkbox" checked={noLinea} onChange={(e) => { setNoLinea(e.target.checked); if (e.target.checked) setValue('nomLinea', ''); }} className="rounded" />
+              Senza linea
+            </label>
+          </div>
         </div>
       )}
 
