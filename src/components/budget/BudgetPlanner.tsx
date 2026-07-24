@@ -175,12 +175,15 @@ function BudgetSetupModal({ onSelect }: { onSelect: (id: string) => void }) {
 
   useEffect(() => {
     Promise.all([
-      fetch('/api/budget/scenarios').then(r => r.json()),
-      fetch('/api/budget/orders').then(r => r.json()),
+      fetch('/api/budget/scenarios').then(r => r.ok ? r.json() : { scenarios: [] }),
+      fetch('/api/budget/orders').then(r => r.ok ? r.json() : { orders: [] }),
     ]).then(([sc, ord]) => {
-      setScenarios(sc.scenarios ?? []);
+      const list = sc.scenarios ?? [];
+      setScenarios(list);
       setOrders(ord.orders ?? []);
-      if ((sc.scenarios ?? []).length === 0) setShowForm(true);
+      if (list.length === 0) setShowForm(true);
+    }).catch(() => {
+      setShowForm(true);
     }).finally(() => setLoading(false));
   }, []);
 
@@ -193,11 +196,14 @@ function BudgetSetupModal({ onSelect }: { onSelect: (id: string) => void }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nome: nome.trim(), sourceType, sourceOrderId: sourceType === 'ORDER' ? sourceOrderId || null : null }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? `Errore ${res.status}`);
+      }
       const data = await res.json();
       onSelect(data.id);
-    } catch {
-      toast.error('Errore nella creazione del budget');
+    } catch (e: any) {
+      toast.error(e.message || 'Errore nella creazione del budget');
       setCreating(false);
     }
   }
