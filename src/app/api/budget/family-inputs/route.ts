@@ -1,6 +1,6 @@
 /**
  * PATCH /api/budget/family-inputs
- * Body: { scenarioId, famiglia, vendutoPrevValore?, vendutoPrevPezzi?, mesiConsuntivi?, obiettivo?, marginePieno?, scontoMese5?, scontoMese6? }
+ * Body: { scenarioId, famiglia, vendutoPrevValore?, vendutoPrevPezzi?, mesiConsuntivi?, obiettivo?, marginePieno?, scontoMese5? (margineSaldi), mesiPieno?, mesiSaldi? }
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
@@ -47,7 +47,8 @@ export async function PATCH(req: NextRequest) {
   if ('obiettivo'         in body) data.obiettivo         = n(body.obiettivo);
   if ('marginePieno'      in body) data.marginePieno      = n(body.marginePieno);
   if ('scontoMese5'       in body) data.scontoMese5       = n(body.scontoMese5);
-  if ('scontoMese6'       in body) data.scontoMese6       = n(body.scontoMese6);
+  if ('mesiPieno'         in body) data.mesiPieno         = Math.max(1, Math.round(Number(body.mesiPieno) || 4));
+  if ('mesiSaldi'         in body) data.mesiSaldi         = Math.max(0, Math.round(Number(body.mesiSaldi) || 2));
 
   const row = await prisma.budgetFamilyInput.upsert({
     where: { scenarioId_famiglia: { scenarioId, famiglia } },
@@ -63,6 +64,8 @@ export async function PATCH(req: NextRequest) {
     obiettivo:         row.obiettivo != null ? Number(row.obiettivo) : null,
     marginePieno:      row.marginePieno != null ? Number(row.marginePieno) : null,
     scontoMese5:       row.scontoMese5 != null ? Number(row.scontoMese5) : null,
-    scontoMese6:       row.scontoMese6 != null ? Number(row.scontoMese6) : null,
+    scontoMese6:       null,
+    mesiPieno:         (row as any).mesiPieno ?? 4,
+    mesiSaldi:         (row as any).mesiSaldi ?? 2,
   });
 }

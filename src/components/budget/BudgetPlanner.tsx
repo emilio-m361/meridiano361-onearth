@@ -522,7 +522,9 @@ export default function BudgetPlanner() {
       obiettivo:         obiettivoFamiglia,
       marginePieno:      local.marginePieno       !== undefined ? local.marginePieno      : (db?.marginePieno      ?? null),
       scontoMese5:       local.scontoMese5        !== undefined ? local.scontoMese5       : (db?.scontoMese5       ?? null),
-      scontoMese6:       local.scontoMese6        !== undefined ? local.scontoMese6       : (db?.scontoMese6       ?? null),
+      scontoMese6:       null,
+      mesiPieno:         local.mesiPieno          !== undefined ? local.mesiPieno         : (db?.mesiPieno         ?? 4),
+      mesiSaldi:         local.mesiSaldi          !== undefined ? local.mesiSaldi         : (db?.mesiSaldi         ?? 2),
     };
   }
 
@@ -1261,16 +1263,19 @@ export default function BudgetPlanner() {
                             <NumInput value={input.marginePieno} decimals={1} suffix="%"
                               onChange={(v) => updateFamily(famiglia, 'marginePieno', v)} />
                           </Row>
-                          <Row label="Sconto luglio (%)">
+                          <Row label="Mesi margine pieno">
+                            <NumInput value={input.mesiPieno} decimals={0} placeholder="4"
+                              onChange={(v) => updateFamily(famiglia, 'mesiPieno', v ?? 4)} />
+                          </Row>
+                          <Row label="Mesi saldi">
+                            <NumInput value={input.mesiSaldi} decimals={0} placeholder="2"
+                              onChange={(v) => updateFamily(famiglia, 'mesiSaldi', v ?? 2)} />
+                          </Row>
+                          <Row label="Margine saldi (%)">
                             <NumInput value={input.scontoMese5} decimals={1} suffix="%"
                               onChange={(v) => updateFamily(famiglia, 'scontoMese5', v)} />
                           </Row>
-                          <Row label="Sconto agosto (%)">
-                            <NumInput value={input.scontoMese6} decimals={1} suffix="%"
-                              onChange={(v) => updateFamily(famiglia, 'scontoMese6', v)} />
-                          </Row>
-                          <RowComputed label="Mg. luglio"         value={comp.margineMese5 != null ? pct(comp.margineMese5) : '—'} />
-                          <RowComputed label="Mg. agosto"         value={comp.margineMese6 != null ? pct(comp.margineMese6) : '—'} />
+                          <RowComputed label="Margine saldi effettivo" value={comp.margineSaldi != null ? pct(comp.margineSaldi) : '—'} />
                           <RowComputed label="Mg. medio effettivo" value={comp.margineMedioEffettivo != null ? pct(comp.margineMedioEffettivo) : '—'} highlight />
                           <RowComputed label="Margine obiettivo"  value={comp.margineObiettivo != null ? fmt(comp.margineObiettivo, 0) + ' €' : '—'} />
                         </div>

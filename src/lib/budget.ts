@@ -52,8 +52,10 @@ export interface FamilyInput {
   mesiConsuntivi: number;
   obiettivo: number | null;
   marginePieno: number | null;
-  scontoMese5: number | null; // luglio
-  scontoMese6: number | null; // agosto
+  scontoMese5: number | null; // repurposed: margineSaldi (net margin % during sales period)
+  scontoMese6: number | null; // deprecated
+  mesiPieno: number;
+  mesiSaldi: number;
 }
 
 export interface SubclassRow {
@@ -80,8 +82,7 @@ export interface FamilyComputed {
   pezziProiettati: number | null;
   valoreMedioPezzo: number | null;
   obiettivoPezzi: number | null;
-  margineMese5: number | null;
-  margineMese6: number | null;
+  margineSaldi: number | null;
   margineMedioEffettivo: number | null;
   margineObiettivo: number | null;
 }
@@ -114,7 +115,8 @@ export function computeFamily(
 ): FamilyComputed {
   const {
     vendutoPrevValore, vendutoPrevPezzi, mesiConsuntivi,
-    obiettivo, marginePieno, scontoMese5, scontoMese6,
+    obiettivo, marginePieno, scontoMese5: margineSaldiRaw,
+    mesiPieno, mesiSaldi,
   } = input;
 
   const mc = mesiConsuntivi > 0 ? mesiConsuntivi : null;
@@ -139,15 +141,13 @@ export function computeFamily(
       ? obiettivo / valoreMedioPezzo
       : null;
 
-  const margineMese5 =
-    marginePieno != null && scontoMese5 != null ? marginePieno - scontoMese5 : null;
-  const margineMese6 =
-    marginePieno != null && scontoMese6 != null ? marginePieno - scontoMese6 : null;
+  const margineSaldi = margineSaldiRaw;
+  const totaleMesi = mesiPieno + mesiSaldi;
 
-  // PE: mesiTotali-2 months at full margin, 1 month at mese5, 1 month at mese6
+  // Weighted average: (mesiPieno × marginePieno + mesiSaldi × margineSaldi) / totaleMesi
   const margineMedioEffettivo =
-    marginePieno != null && margineMese5 != null && margineMese6 != null
-      ? (marginePieno * (mesiTotali - 2) + margineMese5 + margineMese6) / mesiTotali
+    marginePieno != null && margineSaldi != null && totaleMesi > 0
+      ? (marginePieno * mesiPieno + margineSaldi * mesiSaldi) / totaleMesi
       : null;
 
   const margineObiettivo =
@@ -157,7 +157,7 @@ export function computeFamily(
 
   return {
     vendutoProiettato, pezziProiettati, valoreMedioPezzo, obiettivoPezzi,
-    margineMese5, margineMese6, margineMedioEffettivo, margineObiettivo,
+    margineSaldi, margineMedioEffettivo, margineObiettivo,
   };
 }
 

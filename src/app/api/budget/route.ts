@@ -62,7 +62,9 @@ export async function GET(req: NextRequest) {
       obiettivo:         toNum(fi.obiettivo),
       marginePieno:      toNum(fi.marginePieno),
       scontoMese5:       toNum(fi.scontoMese5),
-      scontoMese6:       toNum(fi.scontoMese6),
+      scontoMese6:       null,
+      mesiPieno:         (fi as any).mesiPieno ?? 4,
+      mesiSaldi:         (fi as any).mesiSaldi ?? 2,
     })),
     subclassData: subclassData.map((sd) => ({
       famiglia:    sd.famiglia,

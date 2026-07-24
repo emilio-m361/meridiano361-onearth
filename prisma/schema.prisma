@@ -1140,6 +1140,8 @@ model BudgetFamilyInput {
   marginePieno      Decimal? @db.Decimal(5, 2)
   scontoMese5       Decimal? @db.Decimal(5, 2)
   scontoMese6       Decimal? @db.Decimal(5, 2)
+  mesiPieno         Int      @default(4)        @map("mesi_pieno")
+  mesiSaldi         Int      @default(2)        @map("mesi_saldi")
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
