@@ -12,6 +12,7 @@ import { authOptions } from '@/lib/auth';
 import { isMeridiano361Org } from '@/lib/modaServer';
 import { prisma } from '@/lib/prisma';
 import { MODA_BRANCH_ID } from '@/lib/modaAccess';
+import { MODA_FAMIGLIE, BUDGET_SEASON } from '@/lib/budget';
 
 const FORBIDDEN = NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
@@ -104,9 +105,14 @@ export async function GET(req: NextRequest) {
       add(p.conferente, p.famiglia, p.sottoclasse, it.quantity, effectiveCost(p, Number(it.unitPrice), choice), p.retailPrice != null ? Number(p.retailPrice) : 0);
     }
   } else {
-    // All-orders mode: all non-cancelled org orders + operator DRAFT carts
+    // All-orders mode: all non-cancelled org orders containing PE27 MODA products
+    // Filter by product famiglia/collezione rather than order.catalogBranch
+    // to be robust regardless of how the order was created.
     const orderItems = await prisma.orderItem.findMany({
-      where: { order: { organizationId: orgId, catalogBranch: MODA_BRANCH_ID, status: { not: 'ANNULLATO' } } },
+      where: {
+        order: { organizationId: orgId, status: { not: 'ANNULLATO' } },
+        product: { famiglia: { in: [...MODA_FAMIGLIE] }, collezione: BUDGET_SEASON },
+      },
       select: ITEM_SELECT,
     });
 
@@ -115,8 +121,12 @@ export async function GET(req: NextRequest) {
       add(p.conferente, p.famiglia, p.sottoclasse, it.quantity, effectiveCost(p, Number(it.unitPrice)), p.retailPrice != null ? Number(p.retailPrice) : 0);
     }
 
+    // Also include DRAFT MODA carts for the current operator
     const cartItems = await prisma.cartItem.findMany({
-      where: { cart: { operatorId, collectionId: 'moda', status: 'DRAFT' } },
+      where: {
+        cart: { operatorId, collectionId: 'moda', status: 'DRAFT' },
+        product: { famiglia: { in: [...MODA_FAMIGLIE] }, collezione: BUDGET_SEASON },
+      },
       select: ITEM_SELECT,
     });
 
