@@ -141,8 +141,10 @@ function buildGroupingSheet(ws: ExcelJS.Worksheet, items: ItemRow[], key: string
       const bg      = idx % 2 === 0 ? C.white : C.lgray;
       const unitCost = effectiveCost(item.product);
       const subtotal = item.quantity * unitCost;
-      const sv = item.product.sizeVariants?.find((v) => v.taglia === item.taglia);
-      const code = sv?.codice ?? (item.taglia ? `${item.product.code}${item.taglia}` : item.product.code);
+      const taglia = item.taglia || (item.product as any).taglia || '';
+      const sv = item.product.sizeVariants?.find((v) => v.taglia === taglia);
+      const suffix = taglia === 'S/M' ? 'SM' : taglia === 'L/XL' ? 'LX' : taglia;
+      const code = sv?.codice ?? (taglia ? `${item.product.code}${suffix}` : item.product.code);
       const row = ws.addRow([
         code,
         item.product.name,

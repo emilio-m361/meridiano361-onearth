@@ -98,10 +98,17 @@ export default function OrderDemetraExport({ order, onExported }: Props) {
   }
 
   function itemCode(it: typeof items[number]) {
-    if (!it.taglia) return it.product?.code ?? '';
+    const base = it.product?.code ?? '';
+    // taglia effettiva: prima dall'order item (Arch 2), poi dal prodotto stesso (Arch 1)
+    const taglia = it.taglia || (it.product as any)?.taglia || '';
+    if (!taglia) return base;
+    // Arch 2: cerca il codice esatto in sizeVariants
     const sv = (it.product as any)?.sizeVariants as { taglia: string; codice: string }[] | null | undefined;
-    const match = sv?.find((v) => v.taglia === it.taglia);
-    return match?.codice ?? `${it.product?.code ?? ''}${it.taglia}`;
+    const match = sv?.find((v) => v.taglia === taglia);
+    if (match?.codice) return match.codice;
+    // Arch 1 / fallback: converti la taglia nel suffisso del codice Demetra
+    const suffix = taglia === 'S/M' ? 'SM' : taglia === 'L/XL' ? 'LX' : taglia;
+    return `${base}${suffix}`;
   }
 
   async function handleCSV(e: React.MouseEvent, filter?: { field: 'tranche' | 'conferente'; value: string }) {
