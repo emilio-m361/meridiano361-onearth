@@ -60,7 +60,8 @@ const UNIT = 80;
 const COSTA_W = 5;  // 1/3 of original 16 — narrow hangers on barra
 const FRONTALE_W = 60; // 3 grid squares (3×20px)
 const GRID_SQ = 20; // px per grid square
-const WALL_SQUARES = 30; // wall is exactly 30 squares wide
+const WALL_SQUARES = 30;   // wall is exactly 30 squares wide
+const WALL_SQUARES_H = 15; // wall is exactly 15 squares tall
 const FRONTALE_H = 140;
 const FRONTALE_TOP_H = FRONTALE_H / 2;  // 50% each when top+bottom
 const FRONTALE_BOT_H = FRONTALE_H / 2;
@@ -1795,24 +1796,27 @@ function WallRenderer({
     );
   }
 
+  // Pixel height of the main wall area at current screen size (15 squares scaled to container width)
+  const wallContentH = Math.round(containerW * WALL_SQUARES_H / WALL_SQUARES);
+
   return (
-    <div className="flex flex-col flex-1 min-h-0">
+    <div className="flex flex-col">
       {/* Top strip: 4 squares — mensola photos */}
       <PhotoStrip photos={topPhotos} align="top" />
 
-      {/* Main render area — grid background is INSIDE the zoomed div so grid squares scale with content */}
+      {/* Main render area — exactly 30×15 grid squares, scales with container width */}
       <div
         ref={outerWallRef}
-        className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden"
-        style={{ backgroundColor: '#ffffff', isolation: 'isolate' }}
+        style={{ height: wallContentH, overflow: 'hidden', backgroundColor: '#ffffff', isolation: 'isolate' }}
         onPointerMove={onWallPointerMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
       >
-        <div className="flex items-start h-full px-4"
+        <div className="flex items-start px-4"
           style={{
             gap: 16,
             width: WALL_SQUARES * GRID_SQ,
+            height: WALL_SQUARES_H * GRID_SQ,
             zoom: effectiveZoom,
             backgroundImage: 'linear-gradient(rgba(0,0,0,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,0.05) 1px,transparent 1px)',
             backgroundSize: `${GRID_SQ}px ${GRID_SQ}px`,
@@ -1824,7 +1828,7 @@ function WallRenderer({
             <div
               key={el.id}
               ref={(node) => { node ? outerDivRefs.current.set(el.id, node) : outerDivRefs.current.delete(el.id); }}
-              className="flex-shrink-0 h-full select-none"
+              className="flex-shrink-0 select-none" style={{ height: WALL_SQUARES_H * GRID_SQ }}
               style={{ transform: `translateX(${el.offsetX ?? 0}px)`, pointerEvents: 'none' }}
             >
               <div
