@@ -77,15 +77,14 @@ const GROUPING_KEYS = [
 
 type QtyMap = Record<string, number>;
 
-// Usa costoIeConReso → costoIeSenzaReso → unitPrice come fallback.
+// Senza scelta reso usa unitPrice (prezzo base ordine). Con scelta: costoIeConReso o costoIeSenzaReso.
 // choice sovrascrive la priorità quando il conferente ha entrambi i prezzi.
 function effectiveCost(product: any, unitPrice: number, choice?: 'con' | 'senza'): number {
   const conReso   = Number(product?.costoIeConReso);
   const senzaReso = Number(product?.costoIeSenzaReso);
   if (choice === 'senza' && senzaReso > 0) return senzaReso;
   if (choice === 'con'   && conReso   > 0) return conReso;
-  if (conReso   > 0) return conReso;
-  if (senzaReso > 0) return senzaReso;
+  // Senza scelta reso esplicita usa il prezzo base (unitPrice = costPrice all'ordine = Pr. cessione Demetra)
   return unitPrice;
 }
 
@@ -1037,7 +1036,7 @@ export default function OrderPreviewView({ id, initialTab }: { id: string; initi
   }
 
   // Items with effective qty / subtotal (local optimistic overrides).
-  // Il costo unitario usa costoIeConReso → costoIeSenzaReso → unitPrice
+  // Il costo unitario rispetta la scelta reso; senza scelta usa unitPrice
   // così i totali riflettono sempre il costo reale del prodotto.
   // Phantom filter: Arch 2 products have sizeVariants but NO product.taglia; items with no
   // item.taglia for those products are ghost records that must never appear in counts or totals.

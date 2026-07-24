@@ -1,4 +1,4 @@
-// AGGIORNATO: 2026-07-24 (fix coerenza scelta reso; fix navigazione ordini↔visual; fix codici taglia export Demetra)
+// AGGIORNATO: 2026-07-24 (fix coerenza scelta reso; fix nav ordini↔visual; fix codici taglia Demetra; fix totale ordine usa prezzo base senza reso)
 
 import {
   LogIn, BookOpen, Heart, ShoppingBag, ShoppingCart, MapPin, Package,
