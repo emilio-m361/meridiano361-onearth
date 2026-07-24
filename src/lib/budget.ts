@@ -56,6 +56,7 @@ export interface FamilyInput {
   scontoMese6: number | null; // deprecated
   mesiPieno: number;
   mesiSaldi: number;
+  note?: string | null;
 }
 
 export interface SubclassRow {

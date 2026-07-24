@@ -51,6 +51,7 @@ export async function GET(req: NextRequest) {
       obiettivoTotale:         toNum(m.obiettivoTotale),
       costiNegozio:            toNum(m.costiNegozio),
       obiettivoRicavoSviluppo: toNum(m.obiettivoRicavoSviluppo),
+      noteGenerale:            m.noteGenerale  ?? null,
     },
     famiglie: MODA_FAMIGLIE,
     subclassesByFamiglia: MODA_SUBCLASSES,
@@ -65,6 +66,7 @@ export async function GET(req: NextRequest) {
       scontoMese6:       null,
       mesiPieno:         (fi as any).mesiPieno ?? 4,
       mesiSaldi:         (fi as any).mesiSaldi ?? 2,
+      note:              (fi as any).note ?? null,
     })),
     subclassData: subclassData.map((sd) => ({
       famiglia:    sd.famiglia,
@@ -102,6 +104,7 @@ export async function PATCH(req: NextRequest) {
   if ('obiettivoTotale'         in body) update.obiettivoTotale         = body.obiettivoTotale == null ? null : Number(body.obiettivoTotale) || null;
   if ('costiNegozio'            in body) update.costiNegozio            = body.costiNegozio    == null ? null : Number(body.costiNegozio)    || null;
   if ('obiettivoRicavoSviluppo' in body) update.obiettivoRicavoSviluppo = body.obiettivoRicavoSviluppo == null ? null : Number(body.obiettivoRicavoSviluppo) || null;
+  if ('noteGenerale'            in body) update.noteGenerale            = typeof body.noteGenerale === 'string' ? body.noteGenerale || null : null;
 
   if (Object.keys(update).length === 0) return NextResponse.json({ error: 'nessun campo' }, { status: 400 });
 

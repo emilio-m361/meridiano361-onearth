@@ -49,6 +49,7 @@ export async function PATCH(req: NextRequest) {
   if ('scontoMese5'       in body) data.scontoMese5       = n(body.scontoMese5);
   if ('mesiPieno'         in body) data.mesiPieno         = Math.max(1, Math.round(Number(body.mesiPieno) || 4));
   if ('mesiSaldi'         in body) data.mesiSaldi         = Math.max(0, Math.round(Number(body.mesiSaldi) || 2));
+  if ('note'              in body) data.note              = typeof body.note === 'string' ? body.note || null : null;
 
   const row = await prisma.budgetFamilyInput.upsert({
     where: { scenarioId_famiglia: { scenarioId, famiglia } },
@@ -67,5 +68,6 @@ export async function PATCH(req: NextRequest) {
     scontoMese6:       null,
     mesiPieno:         (row as any).mesiPieno ?? 4,
     mesiSaldi:         (row as any).mesiSaldi ?? 2,
+    note:              (row as any).note ?? null,
   });
 }

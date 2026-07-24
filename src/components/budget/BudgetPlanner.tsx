@@ -392,8 +392,12 @@ export default function BudgetPlanner() {
   }, [scenario?.meta.sourceOrderId]);
 
   const { data: marginiSuggeriti } = useQuery<Record<string, number | null>>({
-    queryKey: ['budget-margini-suggeriti'],
-    queryFn: () => fetch('/api/budget/margini-suggeriti').then((r) => r.json()),
+    queryKey: ['budget-margini-suggeriti', orderResoChoices],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (Object.keys(orderResoChoices).length > 0) params.set('resoChoices', JSON.stringify(orderResoChoices));
+      return fetch(`/api/budget/margini-suggeriti?${params}`).then((r) => r.json());
+    },
     staleTime: 5 * 60_000,
   });
 
@@ -451,6 +455,7 @@ export default function BudgetPlanner() {
   const [localObiettivoTotale, setLocalObiettivoTotale] = useState<number | null | undefined>(undefined);
   const [localCostiNegozio, setLocalCostiNegozio] = useState<number | null | undefined>(undefined);
   const [localObiettivoSviluppo, setLocalObiettivoSviluppo] = useState<number | null | undefined>(undefined);
+  const [localNoteGenerale, setLocalNoteGenerale] = useState<string | undefined>(undefined);
   // settori: driven entirely by local state initialized from server on first load
   const [settoriLocal, setSettoriLocal] = useState<Settore[] | null>(null);
   // Refs to flush pending saves on unmount
@@ -466,6 +471,8 @@ export default function BudgetPlanner() {
     localCostiNegozio !== undefined ? localCostiNegozio : (scenario?.meta.costiNegozio ?? null);
   const obiettivoSviluppo: number | null =
     localObiettivoSviluppo !== undefined ? localObiettivoSviluppo : (scenario?.meta.obiettivoRicavoSviluppo ?? null);
+  const noteGenerale: string =
+    localNoteGenerale !== undefined ? localNoteGenerale : ((scenario?.meta as any)?.noteGenerale ?? '');
 
   // Obiettivo totale: local override > DB value
   const obiettivoTotale: number | null =
@@ -525,6 +532,7 @@ export default function BudgetPlanner() {
       scontoMese6:       null,
       mesiPieno:         local.mesiPieno          !== undefined ? local.mesiPieno         : (db?.mesiPieno         ?? 4),
       mesiSaldi:         local.mesiSaldi          !== undefined ? local.mesiSaldi         : (db?.mesiSaldi         ?? 2),
+      note:              local.note               !== undefined ? local.note              : ((db as any)?.note      ?? null),
     };
   }
 
@@ -587,6 +595,24 @@ export default function BudgetPlanner() {
         if (field === 'obiettivoRicavoSviluppo') setLocalObiettivoSviluppo(undefined);
       } catch { toast.error('Errore nel salvataggio'); }
     }, 800);
+  }
+
+  function saveNoteGenerale(value: string) {
+    clearTimeout(saveTimer.current['note-generale']);
+    saveTimer.current['note-generale'] = setTimeout(async () => {
+      try {
+        await fetch('/api/budget', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ scenarioId: activeScenarioIdRef.current, noteGenerale: value || null }),
+        });
+        setLocalNoteGenerale(undefined);
+      } catch { toast.error('Errore nel salvataggio note'); }
+    }, 800);
+  }
+
+  function saveNoteFamiglia(famiglia: string, value: string) {
+    saveFamilyField(famiglia, 'note', value || null);
   }
 
   function saveSettori(rows: Settore[]) {
@@ -1182,6 +1208,18 @@ export default function BudgetPlanner() {
               )}
             </div>
 
+            {/* ── Note generali ── */}
+            <div className="bg-white border border-border rounded-2xl px-4 py-3">
+              <p className="text-xs font-semibold text-gray-700 mb-2">Note generali</p>
+              <textarea
+                value={noteGenerale}
+                onChange={(e) => { setLocalNoteGenerale(e.target.value); saveNoteGenerale(e.target.value); }}
+                placeholder="Annotazioni generali sul budget…"
+                rows={3}
+                className="w-full text-xs border border-border rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-primary placeholder-gray-300"
+              />
+            </div>
+
             {MODA_FAMIGLIE.map((famiglia) => {
               const input = getFamilyInput(famiglia);
               const comp  = familyComputed[famiglia];
@@ -1280,6 +1318,18 @@ export default function BudgetPlanner() {
                           <RowComputed label="Margine obiettivo"  value={comp.margineObiettivo != null ? fmt(comp.margineObiettivo, 0) + ' €' : '—'} />
                         </div>
 
+                      </div>
+
+                      {/* Note per famiglia */}
+                      <div className="mt-3 pt-3 border-t border-border/50">
+                        <p className="text-2xs text-gray-400 uppercase tracking-wide font-medium mb-1.5">Note {famiglia}</p>
+                        <textarea
+                          value={input.note ?? ''}
+                          onChange={(e) => { updateFamily(famiglia, 'note', e.target.value || null); saveNoteFamiglia(famiglia, e.target.value); }}
+                          placeholder={`Annotazioni per ${famiglia}…`}
+                          rows={2}
+                          className="w-full text-xs border border-border rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-primary placeholder-gray-300"
+                        />
                       </div>
                     </div>
                   )}

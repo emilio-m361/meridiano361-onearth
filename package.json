@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && (prisma migrate resolve --rolled-back 20260723100000_parete_source || true) && (prisma migrate resolve --rolled-back 20260723120000_budget_tables || true) && (prisma migrate resolve --rolled-back 20260724000000_budget_multi_scenario || true) && (prisma migrate resolve --rolled-back 20260724120000_budget_mesi_margine || true) && prisma migrate deploy && next build",
+    "build": "prisma generate && (prisma migrate resolve --rolled-back 20260723100000_parete_source || true) && (prisma migrate resolve --rolled-back 20260723120000_budget_tables || true) && (prisma migrate resolve --rolled-back 20260724000000_budget_multi_scenario || true) && (prisma migrate resolve --rolled-back 20260724120000_budget_mesi_margine || true) && (prisma migrate resolve --rolled-back 20260724130000_budget_notes || true) && prisma migrate deploy && next build",
     "start": "next start",
     "lint": "next lint",
     "db:generate": "prisma generate",
