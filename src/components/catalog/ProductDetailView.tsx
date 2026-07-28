@@ -113,6 +113,26 @@ function FieldRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+function PantoneSwatches({ colors }: { colors: import('@/types').ProductPantoneEntry[] }) {
+  if (!colors.length) return null;
+  return (
+    <div className="flex flex-wrap gap-2 mt-3">
+      {colors.map((c) => (
+        <div key={c.pantoneColorId} className="flex items-center gap-1.5 bg-white border border-border rounded-lg px-2 py-1.5">
+          <span
+            className="w-5 h-5 rounded-sm flex-shrink-0 border border-black/10"
+            style={{ backgroundColor: c.hex_code }}
+          />
+          <div className="leading-none">
+            <p className="text-[10px] font-mono text-gray-500">{c.code}</p>
+            <p className="text-[10px] text-gray-700 mt-0.5">{c.name}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 interface Props {
   id: string;
 }
@@ -544,6 +564,7 @@ export default function ProductDetailView({ id }: Props) {
                   return <FieldRow key={key} label={label} value={val} />;
                 })}
               </div>
+              <PantoneSwatches colors={product.pantoneColors ?? []} />
             </div>
           )
         ) : (
@@ -557,6 +578,7 @@ export default function ProductDetailView({ id }: Props) {
                       <FieldRow key={key} label={label} value={capitalize(String(p[key]))} />
                     ))}
                   </div>
+                  <PantoneSwatches colors={product.pantoneColors ?? []} />
                 </div>
               )}
               {activeMaterialFields.length > 0 && (
