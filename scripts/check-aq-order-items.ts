@@ -2,6 +2,7 @@
  * Diagnostica: controlla i unitPrice delle righe ordine per prodotti Altraqualità
  */
 import { prisma } from '../src/lib/prisma';
+import { OrderStatus } from '@prisma/client';
 
 async function main() {
   const items = await prisma.orderItem.findMany({
@@ -30,7 +31,7 @@ async function main() {
   const allItems = await prisma.orderItem.findMany({
     where: {
       product: { conferente: { contains: 'altraqualit', mode: 'insensitive' } },
-      order: { status: { not: 'CANCELLED' } },
+      order: { status: { not: OrderStatus.ANNULLATO } },
     },
     include: { product: { select: { costPrice: true } } },
   });
