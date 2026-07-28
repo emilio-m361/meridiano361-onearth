@@ -154,6 +154,7 @@ export default function CatalogView({
   lockedFamiglia,
   lockedFamiglie,
   excludeGruppoMerceologico,
+  excludeCollezioni,
   readOnly,
 }: {
   lockedCollezione?: string;
@@ -161,6 +162,7 @@ export default function CatalogView({
   lockedFamiglia?: string;
   lockedFamiglie?: string[];
   excludeGruppoMerceologico?: string;
+  excludeCollezioni?: string[];
   readOnly?: boolean;
 } = {}) {
   const { data: session } = useSession();
@@ -345,8 +347,12 @@ export default function CatalogView({
     } else if (lockedFamiglia) {
       base = base.filter((p) => p.famiglia?.toLowerCase() === lockedFamiglia.toLowerCase());
     }
+    if (excludeCollezioni && excludeCollezioni.length > 0) {
+      const excl = excludeCollezioni.map((c) => c.toUpperCase());
+      base = base.filter((p) => !excl.includes((p.collezione ?? '').toUpperCase()));
+    }
     return base;
-  }, [products, lockedGruppoMerceologico, excludeGruppoMerceologico, lockedFamiglie, lockedFamiglia]);
+  }, [products, lockedGruppoMerceologico, excludeGruppoMerceologico, lockedFamiglie, lockedFamiglia, excludeCollezioni]);
 
   const filteredProducts = useMemo(() => {
     let result = branchProducts;
