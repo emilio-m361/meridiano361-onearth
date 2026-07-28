@@ -314,9 +314,9 @@ export default function ProductForm({ product, initialValues, duplicateSource, o
   const [selectedPantones, setSelectedPantones] = useState<ProductPantoneEntry[]>(
     () => isModaInit ? [] : (src?.pantoneColors ?? [])
   );
-  // Moda: 3 fixed slots, one per colore
+  // 3 fixed slots, one per colore (sia MODA che CASA)
   const [pantoneSlots, setPantoneSlots] = useState<(ProductPantoneEntry | null)[]>(() => {
-    const existing = isModaInit ? ((src?.pantoneColors ?? []) as ProductPantoneEntry[]) : [];
+    const existing = (src?.pantoneColors ?? []) as ProductPantoneEntry[];
     return [existing[0] ?? null, existing[1] ?? null, existing[2] ?? null];
   });
   const [pantoneError, setPantoneError] = useState<string | null>(null);
@@ -328,7 +328,7 @@ export default function ProductForm({ product, initialValues, duplicateSource, o
   const forcedPantoneRef = useRef<ProductPantoneEntry[] | null>(null);
   // true = filled automatically (from color match or migration); false = manually chosen or empty
   const [pantoneAutoFilled, setPantoneAutoFilled] = useState<[boolean, boolean, boolean]>(() => {
-    const existing = isModaInit ? (src?.pantoneColors ?? []) : [];
+    const existing = src?.pantoneColors ?? [];
     return [
       !!(existing[0] as any)?.isAutoFilled,
       !!(existing[1] as any)?.isAutoFilled,
@@ -337,7 +337,7 @@ export default function ProductForm({ product, initialValues, duplicateSource, o
   });
   // true = user manually touched this slot → don't auto-override
   const [pantoneManuallySet, setPantoneManuallySet] = useState<[boolean, boolean, boolean]>(() => {
-    const existing = isModaInit ? (src?.pantoneColors ?? []) : [];
+    const existing = src?.pantoneColors ?? [];
     return [!!existing[0], !!existing[1], !!existing[2]] as [boolean, boolean, boolean];
   });
 
@@ -873,9 +873,7 @@ export default function ProductForm({ product, initialValues, duplicateSource, o
     const isModaProduct = (v.gruppoMerceologico ?? '').toLowerCase() === 'moda';
     const forced = forcedPantoneRef.current;
     forcedPantoneRef.current = null;
-    const finalPantones: ProductPantoneEntry[] = forced ?? (isModaProduct
-      ? (pantoneSlots.filter(Boolean) as ProductPantoneEntry[]).map((p, i) => ({ ...p, sortOrder: i, isPrimary: i === 0 }))
-      : selectedPantones);
+    const finalPantones: ProductPantoneEntry[] = forced ?? (pantoneSlots.filter(Boolean) as ProductPantoneEntry[]).map((p, i) => ({ ...p, sortOrder: i, isPrimary: i === 0 }));
     setPantoneError(null);
 
     if (isModaProduct) {
@@ -1302,39 +1300,40 @@ export default function ProductForm({ product, initialValues, duplicateSource, o
       {/* ── Casa: campi specifici in Anagrafica ── */}
       {!isModa && (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Combobox label="Colore 1" field="colore" value={watch('colore') || ''} placeholder="es. rosso" transform={capitalizeFirst}
-              onChange={(v) => {
-                if (hasColorSeparator(v)) {
-                  const [c1, c2, c3] = splitColori(v);
-                  setValue('colore', capitalizeFirst(c1)); setValue('colore2', capitalizeFirst(c2)); setValue('colore3', capitalizeFirst(c3));
-                } else { setValue('colore', v); }
-              }} />
-            <Combobox label="Colore 2" field="colore" value={watch('colore2') || ''} placeholder="es. blu" transform={capitalizeFirst}
-              onChange={(v) => {
-                if (hasColorSeparator(v)) {
-                  const [c2, c3] = splitColori(v);
-                  setValue('colore2', capitalizeFirst(c2)); setValue('colore3', capitalizeFirst(c3));
-                } else { setValue('colore2', v); }
-              }} />
-            <Combobox label="Colore 3" field="colore" value={watch('colore3') || ''} placeholder="es. bianco" transform={capitalizeFirst}
-              onChange={(v) => {
-                if (hasColorSeparator(v)) { setValue('colore3', capitalizeFirst(splitColori(v)[0])); }
-                else { setValue('colore3', v); }
-              }} />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="space-y-2">
+              <Combobox label="Colore 1" field="colore" value={watch('colore') || ''} placeholder="es. rosso" transform={capitalizeFirst}
+                onChange={(v) => {
+                  if (hasColorSeparator(v)) {
+                    const [c1, c2, c3] = splitColori(v);
+                    setValue('colore', capitalizeFirst(c1)); setValue('colore2', capitalizeFirst(c2)); setValue('colore3', capitalizeFirst(c3));
+                  } else { setValue('colore', v); }
+                }} />
+              <SinglePantoneField label="Pantone 1" value={pantoneSlots[0]} onChange={(v) => handleManualPantone(0, v)} isAutoFilled={pantoneAutoFilled[0]} />
+            </div>
+            <div className="space-y-2">
+              <Combobox label="Colore 2" field="colore" value={watch('colore2') || ''} placeholder="es. blu" transform={capitalizeFirst}
+                onChange={(v) => {
+                  if (hasColorSeparator(v)) {
+                    const [c2, c3] = splitColori(v);
+                    setValue('colore2', capitalizeFirst(c2)); setValue('colore3', capitalizeFirst(c3));
+                  } else { setValue('colore2', v); }
+                }} />
+              <SinglePantoneField label="Pantone 2" value={pantoneSlots[1]} onChange={(v) => handleManualPantone(1, v)} isAutoFilled={pantoneAutoFilled[1]} />
+            </div>
+            <div className="space-y-2">
+              <Combobox label="Colore 3" field="colore" value={watch('colore3') || ''} placeholder="es. bianco" transform={capitalizeFirst}
+                onChange={(v) => {
+                  if (hasColorSeparator(v)) { setValue('colore3', capitalizeFirst(splitColori(v)[0])); }
+                  else { setValue('colore3', v); }
+                }} />
+              <SinglePantoneField label="Pantone 3" value={pantoneSlots[2]} onChange={(v) => handleManualPantone(2, v)} isAutoFilled={pantoneAutoFilled[2]} />
+            </div>
           </div>
           <p className="text-2xs text-gray-400 -mt-2">Al maschile: rosso, blu, nero, bianco, beige…</p>
           <Input label="Altri colori" {...register('altriColori')} placeholder="es. oro, argento, avorio chiaro…" />
           <div>
             <Combobox label="Lavorazione" field="lavorazione" value={watch('lavorazione') || ''} onChange={(v) => setValue('lavorazione', v)} />
-          </div>
-
-          <div>
-            <label className={lbl}>Pantone FHI-TCX</label>
-            <ProductPantoneForm
-              value={selectedPantones}
-              onChange={(v) => { setSelectedPantones(v); if (v.length > 0) setPantoneError(null); }}
-            />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
