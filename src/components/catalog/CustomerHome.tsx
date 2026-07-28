@@ -120,7 +120,11 @@ export default function CustomerHome({ canSeeModa }: { canSeeModa: boolean }) {
   type ColInfo = typeof lista[number];
 
   function hrefForId(id: string) { return id === 'moda' ? '/moda' : `/${id}`; }
-  function branchForId(id: string): ActiveBranch { return id === 'moda' ? 'moda' : 'casa'; }
+  function branchForId(id: string): ActiveBranch {
+    if (id === 'moda') return 'moda';
+    if (id === 'collezione-home') return 'collezione-home';
+    return 'casa';
+  }
 
   function CollectionCard({ info, compact = false }: { info: ColInfo; compact?: boolean }) {
     const { setBranch } = useBranchStore();

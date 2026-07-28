@@ -334,6 +334,7 @@ export const DEFAULT_APP_SETTINGS: AppSettingsData = {
     lista: [
       { id: 'casa', titolo: 'Casa 2027', sottotitolo: '', fotoUrl: '', dataInizio: '', dataScadenza: '', dataFine: '', scrollAttivo: true },
       { id: 'moda', titolo: 'Moda PE27', sottotitolo: '', fotoUrl: '', dataInizio: '', dataScadenza: '', dataFine: '', scrollAttivo: true },
+      { id: 'collezione-home', titolo: 'Collezione Home', sottotitolo: '', fotoUrl: '', dataInizio: '', dataScadenza: '', dataFine: '', scrollAttivo: true, visibile: true },
     ],
   },
 };
@@ -500,6 +501,7 @@ export function parseSettingsFromDb(records: { chiave: string; valore: string }[
       const defaultLista = [
         { id: 'casa', titolo: 'Casa 2027', sottotitolo: '', fotoUrl: '', dataInizio: '', dataScadenza: str('collection.casa.bookingDeadline', ''), dataFine: '', scrollAttivo: true },
         { id: 'moda', titolo: 'Moda PE27', sottotitolo: '', fotoUrl: '', dataInizio: '', dataScadenza: str('collection.moda.bookingDeadline', ''), dataFine: '', scrollAttivo: true },
+        { id: 'collezione-home', titolo: 'Collezione Home', sottotitolo: '', fotoUrl: '', dataInizio: '', dataScadenza: '', dataFine: '', scrollAttivo: true, visibile: true },
       ];
       let lista = defaultLista;
       try {

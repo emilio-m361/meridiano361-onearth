@@ -152,12 +152,16 @@ export default function CatalogView({
   lockedCollezione,
   lockedGruppoMerceologico,
   lockedFamiglia,
+  lockedFamiglie,
   excludeGruppoMerceologico,
+  readOnly,
 }: {
   lockedCollezione?: string;
   lockedGruppoMerceologico?: string;
   lockedFamiglia?: string;
+  lockedFamiglie?: string[];
   excludeGruppoMerceologico?: string;
+  readOnly?: boolean;
 } = {}) {
   const { data: session } = useSession();
   const isCustomer = session?.user?.role === 'CUSTOMER';
@@ -292,10 +296,14 @@ export default function CatalogView({
 
   // ── Products ─────────────────────────────────────────────────
   const { data: productsData, isLoading: productsLoading } = useQuery({
-    queryKey: ['products', lockedFamiglia ?? null, lockedCollezione ?? null, lockedGruppoMerceologico ?? null, excludeGruppoMerceologico ?? null],
+    queryKey: ['products', lockedFamiglia ?? null, lockedFamiglie ?? null, lockedCollezione ?? null, lockedGruppoMerceologico ?? null, excludeGruppoMerceologico ?? null],
     queryFn: async () => {
       const params = new URLSearchParams({ active: 'true', limit: '2000' });
-      if (lockedFamiglia) params.set('famiglia', lockedFamiglia);
+      if (lockedFamiglie && lockedFamiglie.length > 0) {
+        params.set('famiglie', lockedFamiglie.join(','));
+      } else if (lockedFamiglia) {
+        params.set('famiglia', lockedFamiglia);
+      }
       if (lockedCollezione) params.set('collezione', lockedCollezione);
       if (lockedGruppoMerceologico) params.set('gruppoMerceologico', lockedGruppoMerceologico);
       const res = await fetch(`/api/products?${params}`);
@@ -331,11 +339,14 @@ export default function CatalogView({
     if (excludeGruppoMerceologico) {
       base = base.filter((p) => p.gruppoMerceologico?.toLowerCase() !== excludeGruppoMerceologico.toLowerCase());
     }
-    if (lockedFamiglia) {
+    if (lockedFamiglie && lockedFamiglie.length > 0) {
+      const lower = lockedFamiglie.map((f) => f.toLowerCase());
+      base = base.filter((p) => lower.includes(p.famiglia?.toLowerCase() ?? ''));
+    } else if (lockedFamiglia) {
       base = base.filter((p) => p.famiglia?.toLowerCase() === lockedFamiglia.toLowerCase());
     }
     return base;
-  }, [products, lockedGruppoMerceologico, excludeGruppoMerceologico]);
+  }, [products, lockedGruppoMerceologico, excludeGruppoMerceologico, lockedFamiglie, lockedFamiglia]);
 
   const filteredProducts = useMemo(() => {
     let result = branchProducts;
@@ -484,7 +495,7 @@ export default function CatalogView({
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
         {/* ── Catalog PDF download ─────────────────────────────────── */}
-        {catalogoDoc && !isModa && (
+        {catalogoDoc && !isModa && !readOnly && (
           <div className="hidden sm:flex border-b border-border bg-cream/30 px-4 sm:px-6 py-2.5 items-center justify-end gap-3">
             <a
               href={catalogoDoc.url}
@@ -636,7 +647,7 @@ export default function CatalogView({
         <div className="sm:hidden px-4 py-4 border-b border-border/50">
           <p className="label-luxury text-accent">Collezione</p>
           <h1 className="font-display text-xl text-primary font-light tracking-wide">
-            {isModa ? 'MODA PE27' : 'CASA 2027'}
+            {isModa ? 'MODA PE27' : readOnly ? 'COLLEZIONE HOME' : 'CASA 2027'}
           </h1>
         </div>
 

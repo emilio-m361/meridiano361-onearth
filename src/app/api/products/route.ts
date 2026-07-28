@@ -175,7 +175,17 @@ export async function GET(req: NextRequest) {
     const conferente = searchParams.get('conferente');
     const isContinuativoParam = searchParams.get('isContinuativo');
 
-    if (famiglia) where.famiglia = famiglia;
+    // famiglie=Famiglia1,Famiglia2 — filter by multiple families (OR)
+    const famiglieParam = searchParams.get('famiglie');
+    if (famiglieParam) {
+      const famiglieLista = famiglieParam.split(',').filter(Boolean);
+      if (famiglieLista.length > 0) {
+        if (!where.AND) where.AND = [];
+        where.AND.push({ famiglia: { in: famiglieLista } });
+      }
+    } else if (famiglia) {
+      where.famiglia = famiglia;
+    }
     if (sottofamiglia) where.sottofamiglia = sottofamiglia;
     if (gruppoOmogeneo) where.gruppoOmogeneo = gruppoOmogeneo;
     if (classe) where.classe = classe;

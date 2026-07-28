@@ -24,6 +24,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const t = useTranslations('product');
   const { card: cs } = useSettings();
   const pathname = usePathname();
+  const isReadOnly = pathname.startsWith('/collezione-home');
   const productHref = pathname.startsWith('/moda') ? `/moda/product/${product.id}` : `/catalog/${product.id}`;
   const cartQty = getItemQuantity(product.id);
   const [localQty, setLocalQty] = useState(0);
@@ -152,7 +153,16 @@ export default function ProductCard({ product }: ProductCardProps) {
       <div className="px-3 pb-3 pt-1 flex flex-col flex-1">
         <div className="flex-1" />
         {/* Prices */}
-        {(cs.prezzoCosto || cs.pvp) && (
+        {isReadOnly ? (
+          cs.pvp && (
+            <div className="flex items-end justify-end mb-3">
+              <div className="text-right">
+                <p className="text-2xs text-gray-400 uppercase tracking-wide">{t('sale')}</p>
+                <p className="text-xs text-gray-500">{formatCurrency(product.retailPrice)}</p>
+              </div>
+            </div>
+          )
+        ) : (cs.prezzoCosto || cs.pvp) && (
         <div className="flex items-end justify-between mb-3">
           {cs.prezzoCosto && (
           <div className="space-y-0.5">
@@ -201,7 +211,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
 
         {/* Lot warning */}
-        {hasLotWarning && (
+        {!isReadOnly && hasLotWarning && (
           <div className="flex items-center gap-1 mb-2 p-1.5 bg-amber-50 rounded border border-amber-200">
             <AlertCircle size={11} className="text-amber-500 flex-shrink-0" />
             <p className="text-2xs text-amber-700">
@@ -211,7 +221,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         )}
 
         {/* Cart controls */}
-        {cs.aggiungi && (hasSizeVariants ? (
+        {!isReadOnly && cs.aggiungi && (hasSizeVariants ? (
           <button
             onClick={handleAddToCart}
             className={cn(

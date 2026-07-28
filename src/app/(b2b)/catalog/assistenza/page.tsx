@@ -1,8 +1,8 @@
-// AGGIORNATO: 2026-07-24 (fix coerenza scelta reso; fix nav ordini↔visual; fix codici taglia Demetra; fix totale ordine usa prezzo base senza reso)
+// AGGIORNATO: 2026-07-28
 
 import {
   LogIn, BookOpen, Heart, ShoppingBag, ShoppingCart, MapPin, Package,
-  Eye, Download, Smartphone, HelpCircle, Layers, Film, Globe, Wallet, GitMerge, Bell, Settings, Sparkles, Palette, MessageSquare, BarChart2,
+  Eye, Download, Smartphone, HelpCircle, Layers, Film, Globe, Wallet, GitMerge, Bell, Settings, Sparkles, Palette, MessageSquare, BarChart2, Home,
 } from 'lucide-react';
 
 export const metadata = { title: 'Guida all\'app — ON EARTH' };
@@ -30,6 +30,7 @@ const SECTIONS = [
   { id: 'budget-pe27',        label: 'Budget',                            icon: BarChart2 },
   { id: 'ruota-cromatica',    label: 'Ruota Cromatica',                   icon: Palette },
   { id: 'survey',             label: 'Questionario',                      icon: MessageSquare },
+  { id: 'collezione-home',    label: 'Collezione Home',                   icon: Home },
   { id: 'assistenza-tecnica', label: 'Assistenza tecnica',                icon: HelpCircle },
 ];
 
@@ -434,9 +435,24 @@ export default function AssistenzaPage() {
           <p className="text-xs text-gray-400">Il questionario è disponibile fino a domenica 21 giugno 2026.</p>
         </section>
 
-        {/* 23. Assistenza tecnica */}
+        {/* 23. Collezione Home */}
+        <section id="collezione-home" className="bg-white border border-border rounded-lg p-5 sm:p-6 scroll-mt-6">
+          <SectionHeader n={23} icon={Home} label="Collezione Home" />
+          <p className="text-sm text-gray-600 mb-3">
+            La sezione <strong>Collezione Home</strong> raccoglie i prodotti delle famiglie <em>Prodotti per la casa</em> e <em>Ricorrenze e regalistica</em>. È una sezione di sola consultazione: non è possibile aggiungere prodotti al carrello.
+          </p>
+          <ul className="space-y-2">
+            <Bullet><span className="font-medium">Accesso:</span> dalla home dell&apos;app tocca il riquadro <em>Collezione Home</em> per entrare nella sezione.</Bullet>
+            <Bullet><span className="font-medium">Catalogo:</span> sfoglia i prodotti con filtri, ricerca e modalità di visualizzazione (griglia, lista, lookbook). Il filtro famiglia è pre-impostato sui prodotti casa.</Bullet>
+            <Bullet><span className="font-medium">Prezzi:</span> viene mostrato solo il <strong>PVP</strong> (prezzo di vendita al pubblico). Il prezzo di costo non è visibile in questa sezione.</Bullet>
+            <Bullet><span className="font-medium">Preferiti:</span> puoi aggiungere prodotti ai preferiti con il cuore ❤️. I preferiti Collezione Home sono accessibili dalla voce <em>Preferiti</em> nella sezione.</Bullet>
+            <Bullet>Non è possibile creare carrelli o ordini da questa sezione.</Bullet>
+          </ul>
+        </section>
+
+        {/* 24. Assistenza tecnica */}
         <section id="assistenza-tecnica" className="bg-white border border-border rounded-lg p-5 sm:p-6 scroll-mt-6">
-          <SectionHeader n={23} icon={HelpCircle} label="Assistenza tecnica" />
+          <SectionHeader n={24} icon={HelpCircle} label="Assistenza tecnica" />
           <p className="text-sm text-gray-600">
             Per problemi tecnici{' '}
             <a

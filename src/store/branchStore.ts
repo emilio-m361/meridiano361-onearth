@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type ActiveBranch = 'casa' | 'moda';
+export type ActiveBranch = 'casa' | 'moda' | 'collezione-home';
 
 interface BranchStore {
   branch: ActiveBranch;

@@ -53,6 +53,12 @@ const CASA_BASE: NavItem[] = [
   { icon: Package,      label: 'Ordini',    href: '/catalog/orders',    isActive: (p) => p.startsWith('/catalog/orders') },
 ];
 
+const HOME_COLLECTION_BASE: NavItem[] = [
+  HOME_ITEM,
+  { icon: LayoutGrid, label: 'Catalogo',  href: '/collezione-home/catalogo',  isActive: (p) => p.startsWith('/collezione-home/catalogo') },
+  { icon: Heart,      label: 'Preferiti', href: '/collezione-home/preferiti', isActive: (p) => p.startsWith('/collezione-home/preferiti') },
+];
+
 const MODA_BASE: NavItem[] = [
   HOME_ITEM,
   { icon: LayoutGrid,   label: 'Catalogo',  href: '/moda/catalogo',  isActive: (p) => p.startsWith('/moda/catalogo') },
@@ -72,6 +78,9 @@ const BUDGET_ITEM: NavItem = {
 // Path definitivamente MODA (mai casa)
 function isModaPath(p: string) { return p.startsWith('/moda') || p.startsWith('/budget'); }
 
+// Path definitivamente COLLEZIONE HOME
+function isHomeCollectionPath(p: string) { return p.startsWith('/collezione-home'); }
+
 // Path definitivamente CASA (mai moda)
 function isCasaPath(p: string) {
   return (
@@ -90,18 +99,20 @@ function getModaItems(isAdmin: boolean, canVisual: boolean, isMeridiano361: bool
   return isAdmin || isMeridiano361 ? [...base, BUDGET_ITEM] : base;
 }
 
-function getNavItems(pathname: string, isAdmin: boolean, canVisual: boolean, isMeridiano361: boolean, branch: 'casa' | 'moda'): NavItem[] {
+function getNavItems(pathname: string, isAdmin: boolean, canVisual: boolean, isMeridiano361: boolean, branch: 'casa' | 'moda' | 'collezione-home'): NavItem[] {
   const tail = isAdmin ? ADMIN_ITEM : AIUTO_ITEM;
 
   if (pathname === '/home') return [tail];
 
   // Path definitivi: il branch non conta
   if (isModaPath(pathname)) return [...getModaItems(isAdmin, canVisual, isMeridiano361), tail];
+  if (isHomeCollectionPath(pathname)) return [...HOME_COLLECTION_BASE, tail];
   if (isCasaPath(pathname)) return [...CASA_BASE, tail];
 
   // Path ambigui (scheda prodotto /catalog/[id], assistenza, impostazioni, ecc.)
   // Si usa il branch selezionato dall'utente in home, persisto in localStorage
   if (branch === 'moda') return [...getModaItems(isAdmin, canVisual, isMeridiano361), tail];
+  if (branch === 'collezione-home') return [...HOME_COLLECTION_BASE, tail];
   return [...CASA_BASE, tail];
 }
 
@@ -115,6 +126,7 @@ export default function MobileNav() {
   // Auto-sincronizza il branch dai path definitivi (accesso diretto tramite URL)
   useEffect(() => {
     if (isModaPath(pathname)) setBranch('moda');
+    else if (isHomeCollectionPath(pathname)) setBranch('collezione-home');
     else if (isCasaPath(pathname)) setBranch('casa');
   }, [pathname, setBranch]);
 
