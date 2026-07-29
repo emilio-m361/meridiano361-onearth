@@ -380,10 +380,10 @@ export default function AccessRequestsPage() {
         </div>
       ) : (
         <div className="bg-white border border-border rounded overflow-hidden w-full">
-          <table className="table-luxury w-full text-sm">
+          <table className="table-luxury w-full text-xs">
             <thead>
               <tr className="border-b border-border bg-cream">
-                <th className="py-3 px-4 w-8">
+                <th className="py-2 px-2 w-6">
                   <input
                     type="checkbox"
                     checked={allSelected}
@@ -391,20 +391,20 @@ export default function AccessRequestsPage() {
                     className="rounded border-gray-300 text-accent focus:ring-accent"
                   />
                 </th>
-                <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Data</th>
-                <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Organizzazione</th>
-                <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
-                <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cognome</th>
-                <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Telefono</th>
-                <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stato</th>
-                <th className="py-3 px-4 w-48" />
+                <th className="py-2 px-2 text-left text-2xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Data</th>
+                <th className="py-2 px-2 text-left text-2xs font-medium text-gray-500 uppercase tracking-wider">Organizzazione</th>
+                <th className="py-2 px-2 text-left text-2xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
+                <th className="py-2 px-2 text-left text-2xs font-medium text-gray-500 uppercase tracking-wider">Cognome</th>
+                <th className="py-2 px-2 text-left text-2xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                <th className="py-2 px-2 text-left text-2xs font-medium text-gray-500 uppercase tracking-wider">Telefono</th>
+                <th className="py-2 px-2 text-left text-2xs font-medium text-gray-500 uppercase tracking-wider">Stato</th>
+                <th className="py-2 px-2 w-36" />
               </tr>
             </thead>
             <tbody>
               {filtered.map((r) => (
                 <tr key={r.id} className={`border-b border-border last:border-0 ${selected.has(r.id) ? 'bg-accent/5' : ''}`}>
-                  <td className="py-3 px-4">
+                  <td className="py-2 px-2">
                     <input
                       type="checkbox"
                       checked={selected.has(r.id)}
@@ -412,21 +412,21 @@ export default function AccessRequestsPage() {
                       className="rounded border-gray-300 text-accent focus:ring-accent"
                     />
                   </td>
-                  <td className="py-3 px-4 text-gray-500 whitespace-nowrap text-xs">
-                    {format(new Date(r.createdAt), 'd MMM yyyy', { locale: it })}
+                  <td className="py-2 px-2 text-gray-500 whitespace-nowrap">
+                    {format(new Date(r.createdAt), 'd MMM yy', { locale: it })}
                   </td>
-                  <td className="py-3 px-4 font-medium text-primary max-w-[160px]">
+                  <td className="py-2 px-2 font-medium text-primary max-w-[130px]">
                     <span className="block truncate" title={r.organizzazione}>{r.organizzazione}</span>
                   </td>
-                  <td className="py-3 px-4 text-gray-600 whitespace-nowrap">{r.nome || '—'}</td>
-                  <td className="py-3 px-4 text-gray-600 whitespace-nowrap">{r.cognome || '—'}</td>
-                  <td className="py-3 px-4 max-w-[180px]">
-                    <a href={`mailto:${r.email}`} className="text-accent hover:underline text-xs block truncate" title={r.email}>{r.email}</a>
+                  <td className="py-2 px-2 text-gray-600 whitespace-nowrap">{r.nome || '—'}</td>
+                  <td className="py-2 px-2 text-gray-600 whitespace-nowrap">{r.cognome || '—'}</td>
+                  <td className="py-2 px-2 max-w-[160px]">
+                    <a href={`mailto:${r.email}`} className="text-accent hover:underline block truncate" title={r.email}>{r.email}</a>
                   </td>
-                  <td className="py-3 px-4 text-gray-600 text-xs whitespace-nowrap">{r.telefono || '—'}</td>
-                  <td className="py-3 px-4">
-                    <div className="flex flex-col gap-1">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-2xs font-medium ${
+                  <td className="py-2 px-2 text-gray-600 whitespace-nowrap">{r.telefono || '—'}</td>
+                  <td className="py-2 px-2">
+                    <div className="flex flex-col gap-0.5">
+                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-2xs font-medium ${
                         r.status === 'pending'
                           ? 'bg-amber-50 text-amber-700 border border-amber-200'
                           : 'bg-green-50 text-green-700 border border-green-200'
@@ -439,32 +439,32 @@ export default function AccessRequestsPage() {
                           title={r.mailCredenzialiInviata ? 'Email credenziali inviata' : 'Email non inviata'}
                         >
                           {r.mailCredenzialiInviata
-                            ? <MailCheck size={10} className="text-green-500" />
-                            : <Mail size={10} className="text-gray-300" />
+                            ? <MailCheck size={9} className="text-green-500" />
+                            : <Mail size={9} className="text-gray-300" />
                           }
                           {r.approvataAt && format(new Date(r.approvataAt), 'd MMM', { locale: it })}
                         </span>
                       )}
                     </div>
                   </td>
-                  <td className="py-3 px-4">
-                    <div className="flex items-center justify-end gap-1.5">
+                  <td className="py-2 px-2">
+                    <div className="flex items-center justify-end gap-1">
                       {r.status === 'pending' && (
                         <>
                           <button
                             onClick={() => setCreateReq(r)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-2xs font-medium bg-primary text-white rounded hover:bg-primary/90 transition-colors whitespace-nowrap"
+                            className="inline-flex items-center gap-1 px-2 py-1 text-2xs font-medium bg-primary text-white rounded hover:bg-primary/90 transition-colors whitespace-nowrap"
                           >
-                            <UserPlus size={10} />
+                            <UserPlus size={9} />
                             Crea account
                           </button>
                           <button
                             onClick={() => markHandled(r.id)}
                             disabled={markingId === r.id}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-2xs font-medium text-green-700 border border-green-200 rounded hover:bg-green-50 transition-colors disabled:opacity-50"
+                            className="inline-flex items-center gap-1 px-2 py-1 text-2xs font-medium text-green-700 border border-green-200 rounded hover:bg-green-50 transition-colors disabled:opacity-50"
                             title="Segna come gestita"
                           >
-                            {markingId === r.id ? <Loader2 size={10} className="animate-spin" /> : <Check size={10} />}
+                            {markingId === r.id ? <Loader2 size={9} className="animate-spin" /> : <Check size={9} />}
                           </button>
                         </>
                       )}
@@ -475,7 +475,7 @@ export default function AccessRequestsPage() {
                             disabled={deletingId === r.id}
                             className="text-2xs text-red-600 font-medium hover:text-red-700 disabled:opacity-50"
                           >
-                            {deletingId === r.id ? <Loader2 size={10} className="animate-spin" /> : 'Sì'}
+                            {deletingId === r.id ? <Loader2 size={9} className="animate-spin" /> : 'Sì'}
                           </button>
                           <button
                             onClick={() => setConfirmDeleteId(null)}
@@ -487,10 +487,10 @@ export default function AccessRequestsPage() {
                       ) : (
                         <button
                           onClick={() => setConfirmDeleteId(r.id)}
-                          className="p-1.5 text-gray-300 hover:text-red-500 rounded hover:bg-red-50 transition-colors"
+                          className="p-1 text-gray-300 hover:text-red-500 rounded hover:bg-red-50 transition-colors"
                           title="Elimina"
                         >
-                          <Trash2 size={12} />
+                          <Trash2 size={11} />
                         </button>
                       )}
                     </div>
