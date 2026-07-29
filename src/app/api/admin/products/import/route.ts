@@ -6,6 +6,50 @@ import { prisma } from '@/lib/prisma';
 import { titleCase } from '@/lib/normalizeClassification';
 import { syncManyProductClassifications } from '@/lib/syncClassification';
 import { splitColori, hasColorSeparator } from '@/lib/coloriUtils';
+import { inferHueFromColore } from '@/lib/colorHarmony';
+
+// ─── Pantone auto-assign helpers ──────────────────────────────────────────────
+
+type PantoneRow = { id: bigint; hex_code: string };
+
+function hexToRgb(hex: string) {
+  const h = (hex ?? '').replace('#', '').padEnd(6, '0');
+  return { r: parseInt(h.slice(0, 2), 16) || 0, g: parseInt(h.slice(2, 4), 16) || 0, b: parseInt(h.slice(4, 6), 16) || 0 };
+}
+
+function nearestPantone(targetHex: string, pantones: PantoneRow[]): PantoneRow | null {
+  let best: PantoneRow | null = null, bestDist = Infinity;
+  const t = hexToRgb(targetHex);
+  for (const p of pantones) {
+    if (!p.hex_code) continue;
+    const c = hexToRgb(p.hex_code);
+    const d = Math.sqrt((t.r - c.r) ** 2 + (t.g - c.g) ** 2 + (t.b - c.b) ** 2);
+    if (d < bestDist) { bestDist = d; best = p; }
+  }
+  return best;
+}
+
+async function assignAutoPantones(productId: string, colori: (string | null | undefined)[], allPantones: PantoneRow[]) {
+  const seen = new Set<number>();
+  let sortOrder = 0;
+  for (const colore of colori) {
+    if (!colore) continue;
+    const hue = inferHueFromColore(colore);
+    if (!hue?.hex) continue;
+    const match = nearestPantone(hue.hex, allPantones);
+    if (!match) continue;
+    const pid = Number(match.id);
+    if (seen.has(pid)) continue;
+    seen.add(pid);
+    const isPrimary = sortOrder === 0;
+    await prisma.$executeRaw`
+      INSERT INTO product_pantones (product_id, pantone_color_id, sort_order, is_primary, is_auto_filled)
+      VALUES (${productId}, ${BigInt(pid)}, ${sortOrder}, ${isPrimary}, true)
+      ON CONFLICT (product_id, pantone_color_id) DO NOTHING
+    `;
+    sortOrder++;
+  }
+}
 
 // ─── Parsers ──────────────────────────────────────────────────────────────────
 
@@ -235,6 +279,11 @@ export async function POST(req: NextRequest) {
       .map((r) => (r.code ? String(r.code).toUpperCase().trim() : null))
       .filter(Boolean) as string[];
 
+    // Load all pantone colors once for auto-assign
+    const allPantones = await prisma.$queryRaw<PantoneRow[]>`
+      SELECT id, hex_code FROM pantone_colors WHERE hex_code IS NOT NULL AND hex_code != ''
+    `;
+
     // ── Dry run: preview ──────────────────────────────────────────────────────
     if (dryRun) {
       const previewRows = rows.slice(0, 10);
@@ -380,6 +429,7 @@ export async function POST(req: NextRequest) {
           const newProduct = await prisma.product.create({ data: createData as any });
           created++;
           newProductIds.push(newProduct.id);
+          await assignAutoPantones(newProduct.id, [createData.colore, createData.colore2, createData.colore3], allPantones);
           if (Object.keys(createData).some((k) => CLASSIFICATION_FIELDS.has(k))) {
             syncFields.push({
               nomLinea: createData.nomLinea, collezione: createData.collezione,
