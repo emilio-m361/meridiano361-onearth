@@ -73,6 +73,7 @@ const schema = z.object({
     // Altri
     notes:               strOpt,
     isActive:            z.boolean().optional(),
+    cataloghi:           z.array(z.string()).optional(),
   }),
 });
 
@@ -118,11 +119,12 @@ export async function PATCH(req: NextRequest) {
     }
     if (normalized.fasciaSconto !== undefined) updateData.fasciaSconto = normalized.fasciaSconto ?? null;
     if (normalized.isActive !== undefined) updateData.isActive = normalized.isActive;
+    const cataloghiToSet: string[] | undefined = (normalized as any).cataloghi;
     if (normalized.materiale1Bio !== undefined) updateData.materiale1Bio = normalized.materiale1Bio;
     if (normalized.materiale2Bio !== undefined) updateData.materiale2Bio = normalized.materiale2Bio;
     if (normalized.materiale3Bio !== undefined) updateData.materiale3Bio = normalized.materiale3Bio;
 
-    if (Object.keys(updateData).length === 0) {
+    if (Object.keys(updateData).length === 0 && cataloghiToSet === undefined) {
       return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
     }
 
@@ -151,10 +153,21 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ updated: products.length });
     }
 
-    const { count } = await prisma.product.updateMany({
-      where: { id: { in: ids } },
-      data: updateData,
-    });
+    let count = 0;
+    if (Object.keys(updateData).length > 0) {
+      const result = await prisma.product.updateMany({
+        where: { id: { in: ids } },
+        data: updateData,
+      });
+      count = result.count;
+    }
+
+    if (cataloghiToSet !== undefined) {
+      for (const id of ids) {
+        await prisma.$executeRaw`UPDATE products SET cataloghi = ${cataloghiToSet}::text[] WHERE id = ${id}`;
+      }
+      if (count === 0) count = ids.length;
+    }
 
     return NextResponse.json({ updated: count });
   } catch (err: any) {

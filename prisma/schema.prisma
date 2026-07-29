@@ -118,6 +118,7 @@ model Product {
   materiale2Bio      Boolean  @default(false) @map("materiale2_bio")
   materiale3Bio      Boolean  @default(false) @map("materiale3_bio")
   isContinuativo     Boolean  @default(false)
+  cataloghi          String[] @default([])
   sizeVariants       Json?    @map("size_variants")
   descrizioneEn      String?
   descrizioneDe      String?

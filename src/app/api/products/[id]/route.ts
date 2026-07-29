@@ -87,6 +87,7 @@ const updateSchema = z.object({
   pantoneAutoFilledFlags: z.array(z.boolean()).optional(),
   sizeVariants: z.array(z.object({ taglia: z.string(), codice: z.string() })).optional().nullable(),
   isContinuativo: z.boolean().optional(),
+  cataloghi: z.array(z.string()).optional(),
 });
 
 export async function GET(
@@ -155,7 +156,7 @@ export async function PATCH(
 
     const body = await req.json();
     const parsed = updateSchema.parse(body);
-    const { colorBlockIds, pantoneColorIds, pantoneAutoFilledFlags, sizeVariants, ...rest } = parsed;
+    const { colorBlockIds, pantoneColorIds, pantoneAutoFilledFlags, sizeVariants, cataloghi, ...rest } = parsed;
     const data = normalizeProductClassificationFields(rest);
     if (sizeVariants !== undefined) (data as any).sizeVariants = sizeVariants?.length ? sizeVariants : null;
 
@@ -234,6 +235,11 @@ export async function PATCH(
       data,
       include: { category: true },
     });
+
+    // Sync cataloghi array
+    if (cataloghi !== undefined) {
+      await prisma.$executeRaw`UPDATE products SET cataloghi = ${cataloghi}::text[] WHERE id = ${params.id}`;
+    }
 
     // Sync color blocks many-to-many
     if (colorBlockIds !== undefined) {

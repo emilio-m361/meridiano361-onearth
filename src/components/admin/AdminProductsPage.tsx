@@ -17,6 +17,7 @@ import BulkImageUpload from './BulkImageUpload';
 import ProductForm from './ProductForm';
 import type { Product } from '@/types';
 import toast from 'react-hot-toast';
+import { useSettings } from '@/contexts/SettingsContext';
 
 type ActiveFilter = 'all' | 'active' | 'inactive';
 type FotoFilter = 'all' | 'con-foto' | 'senza-foto' | 'foto-multiple';
@@ -329,6 +330,7 @@ function computeCommonBulkValues(products: Product[]): BulkEditValues {
 export default function AdminProductsPage({ lockedSection }: { lockedSection?: 'moda' | 'casa' }) {
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
+  const { collections } = useSettings();
 
   const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
   const [showImport, setShowImport] = useState(false);
@@ -421,6 +423,11 @@ export default function AdminProductsPage({ lockedSection }: { lockedSection?: '
   const [isBulkUpdating, setIsBulkUpdating] = useState(false);
   const [bulkEditValues, setBulkEditValues] = useState<BulkEditValues>(EMPTY_BULK);
   const [lastUndo, setLastUndo] = useState<{ label: string; restore: () => Promise<void> } | null>(null);
+  const [cataloghiModal, setCataloghiModal] = useState<{
+    onConfirm: (cataloghi: string[]) => void;
+    defaults: string[];
+  } | null>(null);
+  const [pendingCataloghi, setPendingCataloghi] = useState<string[]>([]);
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-products'],
@@ -673,15 +680,39 @@ export default function AdminProductsPage({ lockedSection }: { lockedSection?: '
     });
   }
 
+  function askCataloghi(defaults: string[]): Promise<string[] | null> {
+    return new Promise((resolve) => {
+      setPendingCataloghi(defaults.length > 0 ? [...defaults] : []);
+      setCataloghiModal({
+        defaults,
+        onConfirm: (selected) => {
+          setCataloghiModal(null);
+          resolve(selected);
+        },
+      });
+    });
+  }
+
   async function handleToggleActive(product: Product) {
     const prevIsActive = product.isActive;
     const productId = product.id;
     const productName = product.name;
+    const prevCataloghi = product.cataloghi ?? [];
+
+    let cataloghiToSet: string[] | undefined;
+    if (!prevIsActive) {
+      const selected = await askCataloghi(prevCataloghi);
+      if (selected === null) return;
+      cataloghiToSet = selected;
+    }
+
     try {
+      const body: Record<string, unknown> = { isActive: !prevIsActive };
+      if (cataloghiToSet !== undefined) body.cataloghi = cataloghiToSet;
       const res = await fetch(`/api/products/${productId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isActive: !prevIsActive }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error('Failed');
       await queryClient.invalidateQueries({ queryKey: ['admin-products'] });
@@ -692,7 +723,7 @@ export default function AdminProductsPage({ lockedSection }: { lockedSection?: '
           await fetch(`/api/products/${productId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ isActive: prevIsActive }),
+            body: JSON.stringify({ isActive: prevIsActive, cataloghi: prevCataloghi }),
           });
           await queryClient.invalidateQueries({ queryKey: ['admin-products'] });
           setLastUndo(null);
@@ -840,6 +871,23 @@ export default function AdminProductsPage({ lockedSection }: { lockedSection?: '
       return;
     }
 
+    // Se si sta attivando, chiedi a quale catalogo
+    let bulkCataloghi: string[] | undefined;
+    if (payload.isActive === true) {
+      const commonCataloghi = (() => {
+        const affected = allProducts.filter((p) => selectedIds.has(p.id));
+        if (affected.length === 0) return [];
+        const first = new Set(affected[0].cataloghi ?? []);
+        for (const p of affected.slice(1)) {
+          for (const c of [...first]) { if (!(p.cataloghi ?? []).includes(c)) first.delete(c); }
+        }
+        return [...first];
+      })();
+      const selected = await askCataloghi(commonCataloghi);
+      if (selected === null) return;
+      bulkCataloghi = selected;
+    }
+
     const affectedIds = Array.from(selectedIds);
     const payloadKeys = Object.keys(payload);
     const undoSnapshot = allProducts
@@ -847,15 +895,19 @@ export default function AdminProductsPage({ lockedSection }: { lockedSection?: '
       .map((p) => {
         const entry: Record<string, unknown> = { id: p.id };
         for (const k of payloadKeys) entry[k] = (p as any)[k] ?? null;
+        if (bulkCataloghi !== undefined) entry.cataloghi = p.cataloghi ?? [];
         return entry;
       });
+
+    const bulkPayload: Record<string, unknown> = { ...payload };
+    if (bulkCataloghi !== undefined) bulkPayload.cataloghi = bulkCataloghi;
 
     setIsBulkUpdating(true);
     try {
       const res = await fetch('/api/products/bulk-update', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: affectedIds, data: payload }),
+        body: JSON.stringify({ ids: affectedIds, data: bulkPayload }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -2154,6 +2206,44 @@ export default function AdminProductsPage({ lockedSection }: { lockedSection?: '
           )}
         </div>
       </Modal>
+
+      {/* Selezione Catalogo — mostrato quando si attiva un prodotto */}
+      {cataloghiModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-lg shadow-2xl p-6 w-[360px] max-w-[96vw]">
+            <h2 className="text-base font-semibold text-primary mb-1">Aggiungi al catalogo</h2>
+            <p className="text-xs text-gray-400 mb-4">Seleziona uno o più cataloghi in cui rendere visibile il prodotto.</p>
+            <div className="space-y-2 mb-5">
+              {collections.lista.map((c) => (
+                <label key={c.id} className="flex items-center gap-3 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 accent-primary"
+                    checked={pendingCataloghi.includes(c.id)}
+                    onChange={(e) => {
+                      setPendingCataloghi((prev) =>
+                        e.target.checked ? [...prev, c.id] : prev.filter((x) => x !== c.id)
+                      );
+                    }}
+                  />
+                  <span className="text-sm text-primary group-hover:text-accent transition-colors">{c.titolo}</span>
+                </label>
+              ))}
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => { setCataloghiModal(null); cataloghiModal.onConfirm(null as any); }}>
+                Annulla
+              </Button>
+              <Button
+                onClick={() => cataloghiModal.onConfirm(pendingCataloghi)}
+                disabled={pendingCataloghi.length === 0}
+              >
+                Conferma
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

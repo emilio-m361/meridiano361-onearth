@@ -105,6 +105,7 @@ export interface Product {
   materiale2Bio: boolean;
   materiale3Bio: boolean;
   isContinuativo: boolean;
+  cataloghi: string[];
   pantoneColors: ProductPantoneEntry[];
   sizeVariants: Array<{ taglia: string; codice: string }> | null;
   createdAt: string;
