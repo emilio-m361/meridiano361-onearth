@@ -62,7 +62,7 @@ const COL_GROUPS: { label: string; cols: { key: ColKey; label: string }[] }[] = 
     { key: 'sottoclasse',        label: 'Sottoclasse'   },
     { key: 'gruppoOmogeneo',     label: 'Gr. omogeneo'  },
   ]},
-  { label: 'MODA / Dettagli', cols: [
+  { label: 'Dettagli', cols: [
     { key: 'modello',      label: 'Modello'      },
     { key: 'dettaglio',    label: 'Tipo'          },
     { key: 'forma',        label: 'Forma'        },
@@ -1214,8 +1214,8 @@ export default function AdminProductsPage({ lockedSection }: { lockedSection?: '
               </select>
             </div>
 
-            {/* MODA / Dettagli */}
-            <p className="text-2xs font-semibold uppercase tracking-widest text-gray-400 pt-1">MODA / Dettagli</p>
+            {/* Dettagli */}
+            <p className="text-2xs font-semibold uppercase tracking-widest text-gray-400 pt-1">Dettagli</p>
             <div className="flex flex-wrap gap-2">
               <select value={filterDettaglio} onChange={(e) => setFilterDettaglio(e.target.value)} className={selectClass}>
                 <option value="">Tipo</option>
