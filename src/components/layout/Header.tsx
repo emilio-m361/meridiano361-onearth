@@ -90,17 +90,6 @@ export default function Header({ session }: HeaderProps) {
 
       {/* Nav links — desktop */}
       <nav className="hidden md:flex items-center gap-1">
-        {isAdmin && (
-          <Link
-            href="/admin"
-            className={cn(
-              'text-xs px-3 py-1.5 rounded transition-colors border border-dashed border-gray-200',
-              pathname.startsWith('/admin') ? 'text-primary font-semibold bg-cream border-primary/20' : 'text-gray-400 hover:text-primary hover:bg-cream'
-            )}
-          >
-            Admin
-          </Link>
-        )}
         {!isHome && (isInModa
             ? <>
                 {MODA_NAV.map(({ key, href, label, isActive }) => (
