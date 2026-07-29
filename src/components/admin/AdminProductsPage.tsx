@@ -420,6 +420,7 @@ export default function AdminProductsPage({ lockedSection }: { lockedSection?: '
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [isBulkUpdating, setIsBulkUpdating] = useState(false);
   const [bulkEditValues, setBulkEditValues] = useState<BulkEditValues>(EMPTY_BULK);
+  const [lastUndo, setLastUndo] = useState<{ label: string; restore: () => Promise<void> } | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-products'],
@@ -673,15 +674,31 @@ export default function AdminProductsPage({ lockedSection }: { lockedSection?: '
   }
 
   async function handleToggleActive(product: Product) {
+    const prevIsActive = product.isActive;
+    const productId = product.id;
+    const productName = product.name;
     try {
-      const res = await fetch(`/api/products/${product.id}`, {
+      const res = await fetch(`/api/products/${productId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isActive: !product.isActive }),
+        body: JSON.stringify({ isActive: !prevIsActive }),
       });
       if (!res.ok) throw new Error('Failed');
       await queryClient.invalidateQueries({ queryKey: ['admin-products'] });
-      toast.success(`Prodotto ${product.isActive ? 'disattivato' : 'attivato'}`);
+      toast.success(`Prodotto ${prevIsActive ? 'disattivato' : 'attivato'}`);
+      setLastUndo({
+        label: `${prevIsActive ? 'Disattivazione' : 'Attivazione'} di "${productName}"`,
+        restore: async () => {
+          await fetch(`/api/products/${productId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ isActive: prevIsActive }),
+          });
+          await queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+          setLastUndo(null);
+          toast.success('Operazione annullata');
+        },
+      });
     } catch {
       toast.error('Impossibile aggiornare il prodotto');
     }
@@ -823,12 +840,22 @@ export default function AdminProductsPage({ lockedSection }: { lockedSection?: '
       return;
     }
 
+    const affectedIds = Array.from(selectedIds);
+    const payloadKeys = Object.keys(payload);
+    const undoSnapshot = allProducts
+      .filter((p) => selectedIds.has(p.id))
+      .map((p) => {
+        const entry: Record<string, unknown> = { id: p.id };
+        for (const k of payloadKeys) entry[k] = (p as any)[k] ?? null;
+        return entry;
+      });
+
     setIsBulkUpdating(true);
     try {
       const res = await fetch('/api/products/bulk-update', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: Array.from(selectedIds), data: payload }),
+        body: JSON.stringify({ ids: affectedIds, data: payload }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -850,6 +877,21 @@ export default function AdminProductsPage({ lockedSection }: { lockedSection?: '
       if (payload.gruppoOmogeneo !== undefined) setFilterGruppoOmogeneo('');
       await queryClient.invalidateQueries({ queryKey: ['admin-products'] });
       toast.success(`${updated} prodott${updated === 1 ? 'o aggiornato' : 'i aggiornati'}`);
+      setLastUndo({
+        label: `Modifica di ${updated} prodott${updated === 1 ? 'o' : 'i'}`,
+        restore: async () => {
+          await Promise.all(undoSnapshot.map(async ({ id, ...data }) => {
+            await fetch(`/api/products/${id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(data),
+            });
+          }));
+          await queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+          setLastUndo(null);
+          toast.success(`${undoSnapshot.length} prodott${undoSnapshot.length === 1 ? 'o ripristinato' : 'i ripristinati'}`);
+        },
+      });
     } catch (err: any) {
       console.error('[bulk-update]', err);
       toast.error(err.message || 'Impossibile aggiornare i prodotti', { duration: 6000 });
@@ -1026,6 +1068,16 @@ export default function AdminProductsPage({ lockedSection }: { lockedSection?: '
           </p>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
+          {lastUndo && (
+            <Button
+              variant="secondary"
+              icon={<RotateCcw size={13} />}
+              onClick={async () => { await lastUndo.restore(); }}
+              title={lastUndo.label}
+            >
+              <span className="hidden sm:inline">Annulla</span>
+            </Button>
+          )}
           <Button variant="secondary" icon={<Upload size={13} />} onClick={() => setShowImport(true)}>
             <span className="hidden sm:inline">Importa da Excel</span>
           </Button>
