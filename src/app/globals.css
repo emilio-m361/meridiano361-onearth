@@ -114,6 +114,16 @@
   .table-luxury tbody tr {
     @apply hover:bg-cream/50 transition-colors duration-100;
   }
+
+  .table-luxury.table-compact {
+    @apply text-xs;
+  }
+  .table-luxury.table-compact th {
+    @apply py-1.5 px-2 text-2xs;
+  }
+  .table-luxury.table-compact td {
+    @apply py-1.5 px-2 text-xs;
+  }
 }
 
 @layer utilities {

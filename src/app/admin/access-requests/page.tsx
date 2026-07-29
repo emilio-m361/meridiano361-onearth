@@ -380,10 +380,10 @@ export default function AccessRequestsPage() {
         </div>
       ) : (
         <div className="bg-white border border-border rounded overflow-hidden w-full">
-          <table className="table-luxury w-full text-xs">
+          <table className="table-luxury table-compact w-full">
             <thead>
               <tr className="border-b border-border bg-cream">
-                <th className="py-2 px-2 w-6">
+                <th className="w-6">
                   <input
                     type="checkbox"
                     checked={allSelected}
@@ -391,20 +391,20 @@ export default function AccessRequestsPage() {
                     className="rounded border-gray-300 text-accent focus:ring-accent"
                   />
                 </th>
-                <th className="py-2 px-2 text-left text-2xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Data</th>
-                <th className="py-2 px-2 text-left text-2xs font-medium text-gray-500 uppercase tracking-wider">Organizzazione</th>
-                <th className="py-2 px-2 text-left text-2xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
-                <th className="py-2 px-2 text-left text-2xs font-medium text-gray-500 uppercase tracking-wider">Cognome</th>
-                <th className="py-2 px-2 text-left text-2xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                <th className="py-2 px-2 text-left text-2xs font-medium text-gray-500 uppercase tracking-wider">Telefono</th>
-                <th className="py-2 px-2 text-left text-2xs font-medium text-gray-500 uppercase tracking-wider">Stato</th>
-                <th className="py-2 px-2 w-36" />
+                <th className="whitespace-nowrap uppercase tracking-wider">Data</th>
+                <th className="uppercase tracking-wider">Organizzazione</th>
+                <th className="uppercase tracking-wider">Nome</th>
+                <th className="uppercase tracking-wider">Cognome</th>
+                <th className="uppercase tracking-wider">Email</th>
+                <th className="uppercase tracking-wider">Telefono</th>
+                <th className="uppercase tracking-wider">Stato</th>
+                <th className="w-36" />
               </tr>
             </thead>
             <tbody>
               {filtered.map((r) => (
                 <tr key={r.id} className={`border-b border-border last:border-0 ${selected.has(r.id) ? 'bg-accent/5' : ''}`}>
-                  <td className="py-2 px-2">
+                  <td>
                     <input
                       type="checkbox"
                       checked={selected.has(r.id)}
@@ -412,19 +412,19 @@ export default function AccessRequestsPage() {
                       className="rounded border-gray-300 text-accent focus:ring-accent"
                     />
                   </td>
-                  <td className="py-2 px-2 text-gray-500 whitespace-nowrap">
+                  <td className="text-gray-500 whitespace-nowrap">
                     {format(new Date(r.createdAt), 'd MMM yy', { locale: it })}
                   </td>
-                  <td className="py-2 px-2 font-medium text-primary max-w-[130px]">
+                  <td className="font-medium text-primary max-w-[130px]">
                     <span className="block truncate" title={r.organizzazione}>{r.organizzazione}</span>
                   </td>
-                  <td className="py-2 px-2 text-gray-600 whitespace-nowrap">{r.nome || '—'}</td>
-                  <td className="py-2 px-2 text-gray-600 whitespace-nowrap">{r.cognome || '—'}</td>
-                  <td className="py-2 px-2 max-w-[160px]">
+                  <td className="text-gray-600 whitespace-nowrap">{r.nome || '—'}</td>
+                  <td className="text-gray-600 whitespace-nowrap">{r.cognome || '—'}</td>
+                  <td className="max-w-[160px]">
                     <a href={`mailto:${r.email}`} className="text-accent hover:underline block truncate" title={r.email}>{r.email}</a>
                   </td>
-                  <td className="py-2 px-2 text-gray-600 whitespace-nowrap">{r.telefono || '—'}</td>
-                  <td className="py-2 px-2">
+                  <td className="text-gray-600 whitespace-nowrap">{r.telefono || '—'}</td>
+                  <td>
                     <div className="flex flex-col gap-0.5">
                       <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-2xs font-medium ${
                         r.status === 'pending'
@@ -447,7 +447,7 @@ export default function AccessRequestsPage() {
                       )}
                     </div>
                   </td>
-                  <td className="py-2 px-2">
+                  <td>
                     <div className="flex items-center justify-end gap-1">
                       {r.status === 'pending' && (
                         <>
