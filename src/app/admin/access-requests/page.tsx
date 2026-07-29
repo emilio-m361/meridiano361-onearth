@@ -285,7 +285,7 @@ export default function AccessRequestsPage() {
   const inputCls = 'w-full px-3 py-2 bg-white border border-border rounded text-sm text-primary focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/20 placeholder-gray-400';
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
+    <div className="p-4 sm:p-6 lg:p-8 w-full min-w-0">
       {/* Header */}
       <div className="mb-6">
         <p className="label-luxury text-accent mb-1">Admin</p>
@@ -379,8 +379,8 @@ export default function AccessRequestsPage() {
           {search ? 'Nessun risultato per la ricerca.' : 'Nessuna richiesta.'}
         </div>
       ) : (
-        <div className="bg-white border border-border rounded overflow-hidden overflow-x-auto">
-          <table className="table-luxury w-full text-sm min-w-[800px]">
+        <div className="bg-white border border-border rounded overflow-hidden w-full">
+          <table className="table-luxury w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-cream">
                 <th className="py-3 px-4 w-8">
@@ -415,15 +415,15 @@ export default function AccessRequestsPage() {
                   <td className="py-3 px-4 text-gray-500 whitespace-nowrap text-xs">
                     {format(new Date(r.createdAt), 'd MMM yyyy', { locale: it })}
                   </td>
-                  <td className="py-3 px-4 font-medium text-primary max-w-[140px]">
-                    <span className="line-clamp-1">{r.organizzazione}</span>
+                  <td className="py-3 px-4 font-medium text-primary max-w-[160px]">
+                    <span className="block truncate" title={r.organizzazione}>{r.organizzazione}</span>
                   </td>
-                  <td className="py-3 px-4 text-gray-600">{r.nome || '—'}</td>
-                  <td className="py-3 px-4 text-gray-600">{r.cognome || '—'}</td>
-                  <td className="py-3 px-4">
-                    <a href={`mailto:${r.email}`} className="text-accent hover:underline text-xs">{r.email}</a>
+                  <td className="py-3 px-4 text-gray-600 whitespace-nowrap">{r.nome || '—'}</td>
+                  <td className="py-3 px-4 text-gray-600 whitespace-nowrap">{r.cognome || '—'}</td>
+                  <td className="py-3 px-4 max-w-[180px]">
+                    <a href={`mailto:${r.email}`} className="text-accent hover:underline text-xs block truncate" title={r.email}>{r.email}</a>
                   </td>
-                  <td className="py-3 px-4 text-gray-600 text-xs">{r.telefono || '—'}</td>
+                  <td className="py-3 px-4 text-gray-600 text-xs whitespace-nowrap">{r.telefono || '—'}</td>
                   <td className="py-3 px-4">
                     <div className="flex flex-col gap-1">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-2xs font-medium ${
