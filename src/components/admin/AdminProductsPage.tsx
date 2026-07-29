@@ -1052,7 +1052,7 @@ export default function AdminProductsPage({ lockedSection }: { lockedSection?: '
 
       {/* Filter bar */}
       <div className="mb-4 space-y-1.5">
-        {/* Riga 1 — Ricerca · Stato · Collezione */}
+        {/* Riga 1 — Ricerca · Stato · Foto */}
         <div className="flex flex-wrap gap-2 items-center">
           <div className="w-56">
             <Input placeholder="Codice, descrizione, produttore..." value={search} onChange={(e) => setSearch(e.target.value)} icon={<Search size={14} />} />
@@ -1079,26 +1079,12 @@ export default function AdminProductsPage({ lockedSection }: { lockedSection?: '
             <option value="foto-multiple">Foto multiple</option>
           </select>
           <div className="h-5 w-px bg-border/60 flex-shrink-0" />
-          <select value={filterCollezione} onChange={(e) => setFilterCollezione(e.target.value)} className={selectClass}>
-            <option value="">Collezione</option>
-            <option value="__empty__">(nessuna)</option>
-            {collezioneOptions.map((v) => <option key={v} value={v}>{v}</option>)}
-          </select>
-          <select value={filterTranche} onChange={(e) => setFilterTranche(e.target.value)} className={selectClass}>
-            <option value="">Tranche</option>
-            {trancheOptions.map((v) => <option key={v} value={v}>{v}</option>)}
-          </select>
-          <select value={filterStagione} onChange={(e) => setFilterStagione(e.target.value)} className={selectClass}>
-            <option value="">Stagione</option>
-            {stagioneOptions.map((v) => <option key={v} value={v}>{v}</option>)}
-          </select>
-          <div className="h-5 w-px bg-border/60 flex-shrink-0" />
           <button
             onClick={() => setShowAdvancedFilters((v) => !v)}
             className={`flex items-center gap-1 h-8 px-2 text-xs border rounded transition-colors ${showAdvancedFilters || hasAdvancedFilters ? 'border-accent text-accent bg-accent/5' : 'border-border text-gray-500 hover:text-primary hover:bg-cream'}`}
           >
             {showAdvancedFilters ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
-            {hasAdvancedFilters ? `Altri filtri (${[filterPaese,filterConferente,filterModello,filterDettaglio,filterForma,filterTaglia,filterMisura,filterColore2,filterColore3,filterMateriale1,filterMateriale2,filterMateriale3,filterComposizione,filterFantasia,filterLavorazione,filterBloccoColore,filterIva,filterCostoConFascia,filterCostoSenzaFascia,filterRetailFascia].filter(Boolean).length + (filterPantoneSource !== 'all' ? 1 : 0)})` : 'Altri filtri'}
+            {hasAdvancedFilters ? `Altri filtri (${[filterPaese,filterConferente,filterModello,filterDettaglio,filterForma,filterTaglia,filterMisura,filterColore,filterColore2,filterColore3,filterTemaColore,filterMateriale1,filterMateriale2,filterMateriale3,filterComposizione,filterFantasia,filterLavorazione,filterBloccoColore,filterIva,filterCostoConFascia,filterCostoSenzaFascia,filterRetailFascia,filterFasciaSconto,filterFasciaRicarico,filterPrezzoCosto].filter(Boolean).length + (filterTemaColorePresenza !== 'all' ? 1 : 0) + (filterPantoneSource !== 'all' ? 1 : 0)})` : 'Altri filtri'}
           </button>
           {hasFilters && (
             <button onClick={resetFilters} className="flex items-center gap-1 h-8 px-2 text-xs text-gray-500 hover:text-primary border border-border rounded hover:bg-cream transition-colors">
@@ -1108,7 +1094,28 @@ export default function AdminProductsPage({ lockedSection }: { lockedSection?: '
           )}
         </div>
 
-        {/* Riga 2 — Tassonomia · Fornitore */}
+        {/* Riga 2 — Catalogo */}
+        <div className="flex flex-wrap gap-2 items-center">
+          <select value={filterCollezione} onChange={(e) => setFilterCollezione(e.target.value)} className={selectClass}>
+            <option value="">Collezione</option>
+            <option value="__empty__">(nessuna)</option>
+            {collezioneOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+          </select>
+          <select value={filterStagione} onChange={(e) => setFilterStagione(e.target.value)} className={selectClass}>
+            <option value="">Stagione</option>
+            {stagioneOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+          </select>
+          <select value={filterTranche} onChange={(e) => setFilterTranche(e.target.value)} className={selectClass}>
+            <option value="">Tranche</option>
+            {trancheOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+          </select>
+          <select value={filterLinea} onChange={(e) => setFilterLinea(e.target.value)} className={selectClass}>
+            <option value="">Linea</option>
+            {lineaOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+          </select>
+        </div>
+
+        {/* Riga 3 — Classificazione */}
         <div className="flex flex-wrap gap-2 items-center">
           {!lockedSection && (
             <select value={filterGruppo} onChange={(e) => setFilterGruppo(e.target.value)} className={selectClass}>
@@ -1132,165 +1139,165 @@ export default function AdminProductsPage({ lockedSection }: { lockedSection?: '
             <option value="">Gr. omogeneo</option>
             {gruppoOmogeneoOptions.map((v) => <option key={v} value={v}>{v}</option>)}
           </select>
-          <div className="h-5 w-px bg-border/60 flex-shrink-0" />
-          <select value={filterProduttore} onChange={(e) => setFilterProduttore(e.target.value)} className={selectClass}>
-            <option value="">Produttore</option>
-            {produttoreOptions.map((v) => <option key={v} value={v}>{v}</option>)}
-          </select>
-          <select value={filterLinea} onChange={(e) => setFilterLinea(e.target.value)} className={selectClass}>
-            <option value="">Linea</option>
-            {lineaOptions.map((v) => <option key={v} value={v}>{v}</option>)}
-          </select>
         </div>
 
-        {/* Riga 3 — Colore · Prezzi */}
-        <div className="flex flex-wrap gap-2 items-center">
-          <select value={filterColore} onChange={(e) => setFilterColore(e.target.value)} className={selectClass}>
-            <option value="">Colore 1</option>
-            {coloreOptions.map((v) => <option key={v} value={v}>{capitalize(v)}</option>)}
-          </select>
-          <select value={filterTemaColore} onChange={(e) => setFilterTemaColore(e.target.value)} className={selectClass}>
-            <option value="">Tema colore</option>
-            {temaColoreOptions.map((v) => <option key={v} value={v}>{capitalize(v)}</option>)}
-          </select>
-          <select value={filterTemaColorePresenza} onChange={(e) => setFilterTemaColorePresenza(e.target.value as TemaColorePresenzaFilter)} className={selectClass}>
-            <option value="all">Tema: Tutti</option>
-            <option value="con-tema">Con tema</option>
-            <option value="senza-tema">Senza tema</option>
-          </select>
-          <div className="h-5 w-px bg-border/60 flex-shrink-0" />
-          <select value={filterFasciaSconto} onChange={(e) => setFilterFasciaSconto(e.target.value)} className={selectClass}>
-            <option value="">Fascia sconto</option>
-            <option value="0-30">&lt; 30%</option>
-            <option value="30-40">30–40%</option>
-            <option value="40-50">40–50%</option>
-            <option value="50-60">50–60%</option>
-            <option value="60+">&gt; 60%</option>
-          </select>
-          <select value={filterFasciaRicarico} onChange={(e) => setFilterFasciaRicarico(e.target.value)} className={selectClass}>
-            <option value="">Fascia ricarico</option>
-            <option value="0-50">&lt; 50%</option>
-            <option value="50-100">50–100%</option>
-            <option value="100-150">100–150%</option>
-            <option value="150+">&gt; 150%</option>
-          </select>
-          <select value={filterPrezzoCosto} onChange={(e) => setFilterPrezzoCosto(e.target.value)} className={selectClass}>
-            <option value="">Costo i.e.</option>
-            <option value="0-5">0–5 €</option>
-            <option value="5-10">5–10 €</option>
-            <option value="10-20">10–20 €</option>
-            <option value="20-50">20–50 €</option>
-            <option value="50+">&gt; 50 €</option>
-          </select>
-        </div>
-
-        {/* Advanced filters */}
+        {/* Filtri avanzati — ordinati come la scheda prodotto */}
         {showAdvancedFilters && (
-          <div className="flex flex-wrap gap-2 items-center p-3 bg-gray-50 rounded border border-border">
-            <span className="text-2xs font-semibold uppercase tracking-widest text-gray-400 w-full mb-0.5">Anagrafica</span>
-            <select value={filterConferente} onChange={(e) => setFilterConferente(e.target.value)} className={selectClass}>
-              <option value="">Conferente</option>
-              {conferenteOptions.map((v) => <option key={v} value={v}>{v}</option>)}
-            </select>
-            <select value={filterPaese} onChange={(e) => setFilterPaese(e.target.value)} className={selectClass}>
-              <option value="">Paese</option>
-              {paeseOptions.map((v) => <option key={v} value={v}>{v}</option>)}
-            </select>
-            <select value={filterMisura} onChange={(e) => setFilterMisura(e.target.value)} className={selectClass}>
-              <option value="">Misura</option>
-              {misuraOptions.map((v) => <option key={v} value={v}>{v}</option>)}
-            </select>
-            <select value={filterIva} onChange={(e) => setFilterIva(e.target.value)} className={selectClass}>
-              <option value="">IVA</option>
-              {ivaOptions.map((v) => <option key={v} value={v}>{v}%</option>)}
-            </select>
-            <select value={filterRetailFascia} onChange={(e) => setFilterRetailFascia(e.target.value)} className={selectClass}>
-              <option value="">Prezzo vendita</option>
-              <option value="0-20">0–20 €</option>
-              <option value="20-50">20–50 €</option>
-              <option value="50-100">50–100 €</option>
-              <option value="100-200">100–200 €</option>
-              <option value="200+">&gt; 200 €</option>
-            </select>
-            <select value={filterCostoConFascia} onChange={(e) => setFilterCostoConFascia(e.target.value)} className={selectClass}>
-              <option value="">Con reso</option>
-              <option value="0-5">0–5 €</option>
-              <option value="5-10">5–10 €</option>
-              <option value="10-20">10–20 €</option>
-              <option value="20-50">20–50 €</option>
-              <option value="50+">&gt; 50 €</option>
-            </select>
-            <select value={filterCostoSenzaFascia} onChange={(e) => setFilterCostoSenzaFascia(e.target.value)} className={selectClass}>
-              <option value="">Senza reso</option>
-              <option value="0-5">0–5 €</option>
-              <option value="5-10">5–10 €</option>
-              <option value="10-20">10–20 €</option>
-              <option value="20-50">20–50 €</option>
-              <option value="50+">&gt; 50 €</option>
-            </select>
+          <div className="p-3 bg-gray-50 rounded border border-border space-y-2">
 
-            <span className="text-2xs font-semibold uppercase tracking-widest text-gray-400 w-full mb-0.5 mt-1">MODA / Dettagli</span>
-            <select value={filterModello} onChange={(e) => setFilterModello(e.target.value)} className={selectClass}>
-              <option value="">Modello</option>
-              {modelloOptions.map((v) => <option key={v} value={v}>{v}</option>)}
-            </select>
-            <select value={filterDettaglio} onChange={(e) => setFilterDettaglio(e.target.value)} className={selectClass}>
-              <option value="">Tipo</option>
-              {dettaglioOptions.map((v) => <option key={v} value={v}>{v}</option>)}
-            </select>
-            <select value={filterForma} onChange={(e) => setFilterForma(e.target.value)} className={selectClass}>
-              <option value="">Forma</option>
-              {formaOptions.map((v) => <option key={v} value={v}>{v}</option>)}
-            </select>
-            <select value={filterTaglia} onChange={(e) => setFilterTaglia(e.target.value)} className={selectClass}>
-              <option value="">Taglia</option>
-              {tagliaOptions.map((v) => <option key={v} value={v}>{v}</option>)}
-            </select>
-            <select value={filterMateriale1} onChange={(e) => setFilterMateriale1(e.target.value)} className={selectClass}>
-              <option value="">Materiale 1</option>
-              {materiale1Options.map((v) => <option key={v} value={v}>{capitalize(v)}</option>)}
-            </select>
-            <select value={filterMateriale2} onChange={(e) => setFilterMateriale2(e.target.value)} className={selectClass}>
-              <option value="">Materiale 2</option>
-              {materiale2Options.map((v) => <option key={v} value={v}>{capitalize(v)}</option>)}
-            </select>
-            <select value={filterMateriale3} onChange={(e) => setFilterMateriale3(e.target.value)} className={selectClass}>
-              <option value="">Materiale 3</option>
-              {materiale3Options.map((v) => <option key={v} value={v}>{capitalize(v)}</option>)}
-            </select>
-            <select value={filterComposizione} onChange={(e) => setFilterComposizione(e.target.value)} className={selectClass}>
-              <option value="">Composizione</option>
-              {composizioneOptions.map((v) => <option key={v} value={v}>{capitalize(v)}</option>)}
-            </select>
-            <select value={filterFantasia} onChange={(e) => setFilterFantasia(e.target.value)} className={selectClass}>
-              <option value="">Fantasia</option>
-              {fantasiaOptions.map((v) => <option key={v} value={v}>{capitalize(v)}</option>)}
-            </select>
-            <select value={filterLavorazione} onChange={(e) => setFilterLavorazione(e.target.value)} className={selectClass}>
-              <option value="">Lavorazione</option>
-              {lavorazioneOptions.map((v) => <option key={v} value={v}>{capitalize(v)}</option>)}
-            </select>
+            {/* Anagrafica */}
+            <p className="text-2xs font-semibold uppercase tracking-widest text-gray-400">Anagrafica</p>
+            <div className="flex flex-wrap gap-2">
+              <select value={filterProduttore} onChange={(e) => setFilterProduttore(e.target.value)} className={selectClass}>
+                <option value="">Produttore</option>
+                {produttoreOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+              </select>
+              <select value={filterConferente} onChange={(e) => setFilterConferente(e.target.value)} className={selectClass}>
+                <option value="">Conferente</option>
+                {conferenteOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+              </select>
+              <select value={filterPaese} onChange={(e) => setFilterPaese(e.target.value)} className={selectClass}>
+                <option value="">Paese</option>
+                {paeseOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+              </select>
+              <select value={filterMisura} onChange={(e) => setFilterMisura(e.target.value)} className={selectClass}>
+                <option value="">Misura</option>
+                {misuraOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+              </select>
+              <select value={filterIva} onChange={(e) => setFilterIva(e.target.value)} className={selectClass}>
+                <option value="">IVA</option>
+                {ivaOptions.map((v) => <option key={v} value={v}>{v}%</option>)}
+              </select>
+            </div>
 
-            <span className="text-2xs font-semibold uppercase tracking-widest text-gray-400 w-full mb-0.5 mt-1">Colori</span>
-            <select value={filterColore2} onChange={(e) => setFilterColore2(e.target.value)} className={selectClass}>
-              <option value="">Colore 2</option>
-              {colore2Options.map((v) => <option key={v} value={v}>{capitalize(v)}</option>)}
-            </select>
-            <select value={filterColore3} onChange={(e) => setFilterColore3(e.target.value)} className={selectClass}>
-              <option value="">Colore 3</option>
-              {colore3Options.map((v) => <option key={v} value={v}>{capitalize(v)}</option>)}
-            </select>
-            <select value={filterBloccoColore} onChange={(e) => setFilterBloccoColore(e.target.value)} className={selectClass}>
-              <option value="">Blocco colore</option>
-              {bloccoColoreOptions.map((v) => <option key={v} value={v}>{capitalize(v)}</option>)}
-            </select>
+            {/* Prezzi */}
+            <p className="text-2xs font-semibold uppercase tracking-widest text-gray-400 pt-1">Prezzi</p>
+            <div className="flex flex-wrap gap-2">
+              <select value={filterPrezzoCosto} onChange={(e) => setFilterPrezzoCosto(e.target.value)} className={selectClass}>
+                <option value="">Costo i.e. senza reso</option>
+                <option value="0-5">0–5 €</option>
+                <option value="5-10">5–10 €</option>
+                <option value="10-20">10–20 €</option>
+                <option value="20-50">20–50 €</option>
+                <option value="50+">&gt; 50 €</option>
+              </select>
+              <select value={filterCostoSenzaFascia} onChange={(e) => setFilterCostoSenzaFascia(e.target.value)} className={selectClass}>
+                <option value="">Costo i.e. con reso</option>
+                <option value="0-5">0–5 €</option>
+                <option value="5-10">5–10 €</option>
+                <option value="10-20">10–20 €</option>
+                <option value="20-50">20–50 €</option>
+                <option value="50+">&gt; 50 €</option>
+              </select>
+              <select value={filterRetailFascia} onChange={(e) => setFilterRetailFascia(e.target.value)} className={selectClass}>
+                <option value="">Prezzo vendita</option>
+                <option value="0-20">0–20 €</option>
+                <option value="20-50">20–50 €</option>
+                <option value="50-100">50–100 €</option>
+                <option value="100-200">100–200 €</option>
+                <option value="200+">&gt; 200 €</option>
+              </select>
+              <select value={filterFasciaSconto} onChange={(e) => setFilterFasciaSconto(e.target.value)} className={selectClass}>
+                <option value="">Fascia sconto</option>
+                <option value="0-30">&lt; 30%</option>
+                <option value="30-40">30–40%</option>
+                <option value="40-50">40–50%</option>
+                <option value="50-60">50–60%</option>
+                <option value="60+">&gt; 60%</option>
+              </select>
+              <select value={filterFasciaRicarico} onChange={(e) => setFilterFasciaRicarico(e.target.value)} className={selectClass}>
+                <option value="">Fascia ricarico</option>
+                <option value="0-50">&lt; 50%</option>
+                <option value="50-100">50–100%</option>
+                <option value="100-150">100–150%</option>
+                <option value="150+">&gt; 150%</option>
+              </select>
+            </div>
 
-            <span className="text-2xs font-semibold uppercase tracking-widest text-gray-400 w-full mb-0.5 mt-1">Pantone</span>
-            <select value={filterPantoneSource} onChange={(e) => setFilterPantoneSource(e.target.value as PantoneSourceFilter)} className={selectClass}>
-              <option value="all">Pantone: Tutti</option>
-              <option value="auto">Inserito automaticamente</option>
-              <option value="manual">Inserito da admin</option>
-            </select>
+            {/* MODA / Dettagli */}
+            <p className="text-2xs font-semibold uppercase tracking-widest text-gray-400 pt-1">MODA / Dettagli</p>
+            <div className="flex flex-wrap gap-2">
+              <select value={filterDettaglio} onChange={(e) => setFilterDettaglio(e.target.value)} className={selectClass}>
+                <option value="">Tipo</option>
+                {dettaglioOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+              </select>
+              <select value={filterModello} onChange={(e) => setFilterModello(e.target.value)} className={selectClass}>
+                <option value="">Modello</option>
+                {modelloOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+              </select>
+              <select value={filterForma} onChange={(e) => setFilterForma(e.target.value)} className={selectClass}>
+                <option value="">Forma</option>
+                {formaOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+              </select>
+              <select value={filterTaglia} onChange={(e) => setFilterTaglia(e.target.value)} className={selectClass}>
+                <option value="">Taglia</option>
+                {tagliaOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+              </select>
+              <select value={filterMateriale1} onChange={(e) => setFilterMateriale1(e.target.value)} className={selectClass}>
+                <option value="">Materiale 1</option>
+                {materiale1Options.map((v) => <option key={v} value={v}>{capitalize(v)}</option>)}
+              </select>
+              <select value={filterMateriale2} onChange={(e) => setFilterMateriale2(e.target.value)} className={selectClass}>
+                <option value="">Materiale 2</option>
+                {materiale2Options.map((v) => <option key={v} value={v}>{capitalize(v)}</option>)}
+              </select>
+              <select value={filterMateriale3} onChange={(e) => setFilterMateriale3(e.target.value)} className={selectClass}>
+                <option value="">Materiale 3</option>
+                {materiale3Options.map((v) => <option key={v} value={v}>{capitalize(v)}</option>)}
+              </select>
+              <select value={filterComposizione} onChange={(e) => setFilterComposizione(e.target.value)} className={selectClass}>
+                <option value="">Composizione</option>
+                {composizioneOptions.map((v) => <option key={v} value={v}>{capitalize(v)}</option>)}
+              </select>
+              <select value={filterFantasia} onChange={(e) => setFilterFantasia(e.target.value)} className={selectClass}>
+                <option value="">Fantasia</option>
+                {fantasiaOptions.map((v) => <option key={v} value={v}>{capitalize(v)}</option>)}
+              </select>
+              <select value={filterLavorazione} onChange={(e) => setFilterLavorazione(e.target.value)} className={selectClass}>
+                <option value="">Lavorazione</option>
+                {lavorazioneOptions.map((v) => <option key={v} value={v}>{capitalize(v)}</option>)}
+              </select>
+            </div>
+
+            {/* Colori */}
+            <p className="text-2xs font-semibold uppercase tracking-widest text-gray-400 pt-1">Colori</p>
+            <div className="flex flex-wrap gap-2">
+              <select value={filterColore} onChange={(e) => setFilterColore(e.target.value)} className={selectClass}>
+                <option value="">Colore 1</option>
+                {coloreOptions.map((v) => <option key={v} value={v}>{capitalize(v)}</option>)}
+              </select>
+              <select value={filterColore2} onChange={(e) => setFilterColore2(e.target.value)} className={selectClass}>
+                <option value="">Colore 2</option>
+                {colore2Options.map((v) => <option key={v} value={v}>{capitalize(v)}</option>)}
+              </select>
+              <select value={filterColore3} onChange={(e) => setFilterColore3(e.target.value)} className={selectClass}>
+                <option value="">Colore 3</option>
+                {colore3Options.map((v) => <option key={v} value={v}>{capitalize(v)}</option>)}
+              </select>
+              <select value={filterTemaColore} onChange={(e) => setFilterTemaColore(e.target.value)} className={selectClass}>
+                <option value="">Tema colore</option>
+                {temaColoreOptions.map((v) => <option key={v} value={v}>{capitalize(v)}</option>)}
+              </select>
+              <select value={filterTemaColorePresenza} onChange={(e) => setFilterTemaColorePresenza(e.target.value as TemaColorePresenzaFilter)} className={selectClass}>
+                <option value="all">Tema: Tutti</option>
+                <option value="con-tema">Con tema</option>
+                <option value="senza-tema">Senza tema</option>
+              </select>
+              <select value={filterBloccoColore} onChange={(e) => setFilterBloccoColore(e.target.value)} className={selectClass}>
+                <option value="">Blocco colore</option>
+                {bloccoColoreOptions.map((v) => <option key={v} value={v}>{capitalize(v)}</option>)}
+              </select>
+            </div>
+
+            {/* Pantone */}
+            <p className="text-2xs font-semibold uppercase tracking-widest text-gray-400 pt-1">Pantone</p>
+            <div className="flex flex-wrap gap-2">
+              <select value={filterPantoneSource} onChange={(e) => setFilterPantoneSource(e.target.value as PantoneSourceFilter)} className={selectClass}>
+                <option value="all">Pantone: Tutti</option>
+                <option value="auto">Inserito automaticamente</option>
+                <option value="manual">Inserito da admin</option>
+              </select>
+            </div>
           </div>
         )}
 
