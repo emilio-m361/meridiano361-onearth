@@ -245,6 +245,7 @@ interface ProductFormProps {
   duplicateSource?: Product;
   onSuccess: () => void;
   onCancel: () => void;
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
 type SizeVariant = { taglia: string; codice: string };
@@ -287,7 +288,7 @@ function buildModaName(
   return parts.join(' ').replace(/\s+/g, ' ').trim();
 }
 
-export default function ProductForm({ product, initialValues, duplicateSource, onSuccess, onCancel }: ProductFormProps) {
+export default function ProductForm({ product, initialValues, duplicateSource, onSuccess, onCancel, onDirtyChange }: ProductFormProps) {
   const isEdit = !!product;
   const queryClient = useQueryClient();
   const p = product as any;
@@ -298,6 +299,7 @@ export default function ProductForm({ product, initialValues, duplicateSource, o
   const fileInputRef  = useRef<HTMLInputElement>(null);
   const fileInputRef2 = useRef<HTMLInputElement>(null);
   const fileInputRef3 = useRef<HTMLInputElement>(null);
+  const dirtyRef = useRef(false);
   const fileInputRef4 = useRef<HTMLInputElement>(null);
   const fileInputRef5 = useRef<HTMLInputElement>(null);
   const [imagePreview,  setImagePreview]  = useState<string>(product?.imageUrl || '');
@@ -410,7 +412,7 @@ export default function ProductForm({ product, initialValues, duplicateSource, o
     watch,
     getValues,
     reset,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: src ? {
@@ -530,6 +532,11 @@ export default function ProductForm({ product, initialValues, duplicateSource, o
       return prev;
     });
   }, [watchedImageUrl]);
+
+  useEffect(() => {
+    dirtyRef.current = isDirty;
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
 
   // Auto-fill Pantone slots from Italian color names when pantone colors are loaded
   useEffect(() => {
@@ -1828,7 +1835,10 @@ export default function ProductForm({ product, initialValues, duplicateSource, o
               <RotateCw size={13} />
             </button>
           </div>
-          <Button variant="ghost" type="button" onClick={onCancel}>Annulla</Button>
+          <Button variant="ghost" type="button" onClick={() => {
+            if (dirtyRef.current && !window.confirm('Hai modifiche non salvate. Vuoi uscire senza salvare?')) return;
+            onCancel();
+          }}>Annulla</Button>
           <Button type="submit" loading={isSubmitting}>{isEdit ? 'Salva modifiche' : 'Crea prodotto'}</Button>
         </div>
       </div>

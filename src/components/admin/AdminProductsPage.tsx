@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, Upload, Search, Pencil, Trash2, Eye, Power, PowerOff, X, RotateCcw, ImagePlus, ChevronUp, ChevronDown, ChevronsUpDown, Languages, Loader2, Shirt, Home, Copy, Download, Columns2, Sparkles } from 'lucide-react';
@@ -331,6 +331,7 @@ export default function AdminProductsPage({ lockedSection }: { lockedSection?: '
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const { collections } = useSettings();
+  const productFormDirtyRef = useRef(false);
 
   const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
   const [showImport, setShowImport] = useState(false);
@@ -1820,9 +1821,23 @@ export default function AdminProductsPage({ lockedSection }: { lockedSection?: '
       </Modal>
 
       {/* Edit Modal */}
-      <Modal isOpen={!!editingProduct} onClose={() => setEditingProduct(null)} title="Modifica Prodotto" size="2xl">
+      <Modal
+        isOpen={!!editingProduct}
+        onClose={() => {
+          if (productFormDirtyRef.current && !window.confirm('Hai modifiche non salvate. Vuoi uscire senza salvare?')) return;
+          productFormDirtyRef.current = false;
+          setEditingProduct(null);
+        }}
+        title="Modifica Prodotto"
+        size="2xl"
+      >
         {editingProduct && (
-          <ProductForm product={editingProduct} onSuccess={() => { setEditingProduct(null); queryClient.invalidateQueries({ queryKey: ['admin-products'] }); }} onCancel={() => setEditingProduct(null)} />
+          <ProductForm
+            product={editingProduct}
+            onSuccess={() => { productFormDirtyRef.current = false; setEditingProduct(null); queryClient.invalidateQueries({ queryKey: ['admin-products'] }); }}
+            onCancel={() => { productFormDirtyRef.current = false; setEditingProduct(null); }}
+            onDirtyChange={(d) => { productFormDirtyRef.current = d; }}
+          />
         )}
       </Modal>
 
@@ -1847,12 +1862,23 @@ export default function AdminProductsPage({ lockedSection }: { lockedSection?: '
       </Modal>
 
       {/* Create Modal */}
-      <Modal isOpen={showCreateForm} onClose={() => { setShowCreateForm(false); setCreateCollectionHint(null); }} title="Aggiungi Prodotto" size="2xl">
+      <Modal
+        isOpen={showCreateForm}
+        onClose={() => {
+          if (productFormDirtyRef.current && !window.confirm('Hai modifiche non salvate. Vuoi uscire senza salvare?')) return;
+          productFormDirtyRef.current = false;
+          setShowCreateForm(false);
+          setCreateCollectionHint(null);
+        }}
+        title="Aggiungi Prodotto"
+        size="2xl"
+      >
         <ProductForm
           key={createCollectionHint ?? 'default'}
           initialValues={createCollectionHint === 'moda' ? { gruppoMerceologico: 'Moda' } : undefined}
-          onSuccess={() => { setShowCreateForm(false); setCreateCollectionHint(null); queryClient.invalidateQueries({ queryKey: ['admin-products'] }); }}
-          onCancel={() => { setShowCreateForm(false); setCreateCollectionHint(null); }}
+          onSuccess={() => { productFormDirtyRef.current = false; setShowCreateForm(false); setCreateCollectionHint(null); queryClient.invalidateQueries({ queryKey: ['admin-products'] }); }}
+          onCancel={() => { productFormDirtyRef.current = false; setShowCreateForm(false); setCreateCollectionHint(null); }}
+          onDirtyChange={(d) => { productFormDirtyRef.current = d; }}
         />
       </Modal>
 
