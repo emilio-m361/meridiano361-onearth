@@ -13,6 +13,7 @@ import { syncProductClassification } from '@/lib/syncClassification';
 import { translateProduct } from '@/lib/translate';
 import { autoLinkPhotosForProduct } from '@/lib/autoLinkPhotos';
 import { autoComposizione } from '@/lib/autoComposizione';
+import { assignAutoPantones } from '@/lib/autoPantone';
 
 const capFirst = (s?: string | null) => s?.trim() ? s.trim().charAt(0).toUpperCase() + s.trim().slice(1).toLowerCase() : null;
 
@@ -397,6 +398,11 @@ export async function POST(req: NextRequest) {
     } catch (linkErr: any) {
       await prisma.product.delete({ where: { id: product.id } }).catch(() => {});
       return NextResponse.json({ error: `Errore inserimento colori: ${linkErr?.message ?? 'sconosciuto'}` }, { status: 500 });
+    }
+
+    // Auto-assign Pantone per prodotti CASA (MODA li richiede esplicitamente)
+    if (!pantoneColorIds?.length) {
+      void assignAutoPantones(product.id, [data.colore ?? null, data.colore2 ?? null, data.colore3 ?? null]).catch(() => {});
     }
 
     void syncProductClassification(data);

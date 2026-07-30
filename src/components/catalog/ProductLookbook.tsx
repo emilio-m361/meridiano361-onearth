@@ -17,7 +17,11 @@ function LookbookCard({ product }: { product: Product }) {
   const { isFavorited, toggle: toggleFavorite } = useFavorites();
   const { card: cs } = useSettings();
   const pathname = usePathname();
-  const productHref = pathname.startsWith('/moda') ? `/moda/product/${product.id}` : `/catalog/${product.id}`;
+  const productHref = pathname.startsWith('/moda')
+    ? `/moda/product/${product.id}`
+    : pathname.startsWith('/collezione-home')
+      ? `/catalog/${product.id}?src=home`
+      : `/catalog/${product.id}`;
   const [justAdded, setJustAdded] = useState(false);
   const [heartPop, setHeartPop] = useState(false);
 

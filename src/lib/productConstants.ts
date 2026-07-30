@@ -14,6 +14,8 @@ export const COLORE_OPTIONS = [
   'Ardesia', 'Piombo', 'Antracite', 'Ferro', 'Titanio', 'Argento', 'Acciaio', 'Tortora scuro',
   // Neri
   'Nero', 'Nero carbone', 'Nero inchiostro', 'Nero grafite', 'Onice',
+  // Speciali
+  'Multicolore',
   // Rossi
   'Rosso', 'Rosso fuoco', 'Rosso ciliegia', 'Rosso fragola', 'Rosso rubino', 'Rosso cremisi',
   'Rosso cardinale', 'Rosso corallo', 'Rosso mattone', 'Rosso pompeiano', 'Rosso borgogna',

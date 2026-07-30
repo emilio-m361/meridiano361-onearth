@@ -9,6 +9,7 @@ import { normalizeProductName, stripStampaFromName, applyStampaToName } from '@/
 import { syncProductClassification } from '@/lib/syncClassification';
 import { translateProduct } from '@/lib/translate';
 import { autoComposizione } from '@/lib/autoComposizione';
+import { assignAutoPantones } from '@/lib/autoPantone';
 
 const capFirst = (s?: string | null) => s?.trim() ? s.trim().charAt(0).toUpperCase() + s.trim().slice(1).toLowerCase() : null;
 
@@ -262,6 +263,12 @@ export async function PATCH(
           VALUES (${params.id}, ${BigInt(pantoneColorIds[i])}, ${i}, ${i === 0}, ${autoFilled})
         `;
       }
+    } else if ('colore' in rest || 'colore2' in rest || 'colore3' in rest) {
+      // Colore modificato senza Pantone esplicito: auto-assign (ON CONFLICT DO NOTHING preserva gli esistenti)
+      const newColore  = 'colore'  in rest ? (data as any).colore  : undefined;
+      const newColore2 = 'colore2' in rest ? (data as any).colore2 : undefined;
+      const newColore3 = 'colore3' in rest ? (data as any).colore3 : undefined;
+      void assignAutoPantones(params.id, [newColore, newColore2, newColore3].filter(Boolean)).catch(() => {});
     }
 
     void syncProductClassification(data);

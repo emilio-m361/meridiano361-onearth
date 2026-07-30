@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import { Session } from 'next-auth';
 import { LogOut, UserCircle, HelpCircle, Home, Settings, Heart } from 'lucide-react';
@@ -57,10 +57,15 @@ export default function Header({ session }: HeaderProps) {
   const preferitiHref = isInModa ? '/moda/preferiti' : '/catalog/preferiti';
   const isInPreferiti = pathname.startsWith('/moda/preferiti') || pathname.startsWith('/catalog/preferiti');
 
+  const searchParams = useSearchParams();
+  const isInCollezioneHome = pathname.startsWith('/collezione-home') || searchParams.get('src') === 'home';
   const modaInfo = collections.lista.find((c) => c.id === 'moda');
   const casaInfo = collections.lista.find((c) => c.id === 'casa');
+  const homeInfo = collections.lista.find((c) => c.id === 'collezione-home');
   const collectionLabel = isInModa && pathname !== '/moda'
     ? modaInfo?.titolo
+    : isInCollezioneHome
+    ? (homeInfo?.titolo || 'Collezione Home')
     : isInCasa && pathname !== '/casa'
     ? casaInfo?.titolo
     : null;

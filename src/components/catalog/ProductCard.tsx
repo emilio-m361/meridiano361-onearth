@@ -25,7 +25,11 @@ export default function ProductCard({ product }: ProductCardProps) {
   const { card: cs } = useSettings();
   const pathname = usePathname();
   const isReadOnly = pathname.startsWith('/collezione-home');
-  const productHref = pathname.startsWith('/moda') ? `/moda/product/${product.id}` : `/catalog/${product.id}`;
+  const productHref = pathname.startsWith('/moda')
+    ? `/moda/product/${product.id}`
+    : pathname.startsWith('/collezione-home')
+      ? `/catalog/${product.id}?src=home`
+      : `/catalog/${product.id}`;
   const cartQty = getItemQuantity(product.id);
   const [localQty, setLocalQty] = useState(0);
   const [justAdded, setJustAdded] = useState(false);

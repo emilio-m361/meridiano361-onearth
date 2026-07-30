@@ -135,9 +135,10 @@ function PantoneSwatches({ colors }: { colors: import('@/types').ProductPantoneE
 
 interface Props {
   id: string;
+  readOnly?: boolean;
 }
 
-export default function ProductDetailView({ id }: Props) {
+export default function ProductDetailView({ id, readOnly = false }: Props) {
   const router = useRouter();
   const { getItemQuantity, updateQuantity, setPendingProduct } = useCartStore();
   const [justAdded, setJustAdded] = useState(false);
@@ -154,7 +155,7 @@ export default function ProductDetailView({ id }: Props) {
     { key: 'sottoclasse',        label: 'Sottoclasse' },
     { key: 'gruppoOmogeneo',     label: 'Gruppo omogeneo' },
     { key: 'stagione',           label: 'Stagione' },
-    { key: 'tranche',            label: 'Tranche' },
+    { key: 'tranche',            label: 'Tranche',    show: !readOnly },
     { key: 'nomLinea',           label: 'Linea',      show: ss.linea },
     { key: 'collezione',         label: 'Collezione', show: ss.collezione },
   ];
@@ -285,10 +286,11 @@ export default function ProductDetailView({ id }: Props) {
     return product.description || null;
   })();
 
-  const hasBusinessInfo =
+  const hasBusinessInfo = !readOnly && (
     (ss.fasciaSconto && product.fasciaSconto != null) ||
     (ss.fasciaRicarico && !!product.fasciaRicarico) ||
-    (ss.iva && product.iva != null);
+    (ss.iva && product.iva != null)
+  );
 
   return (
     <div className="h-full overflow-y-auto">
@@ -631,7 +633,7 @@ export default function ProductDetailView({ id }: Props) {
                 </div>
               </div>
             )}
-            {(hasBusinessInfo || condizioni) && (
+            {!readOnly && (hasBusinessInfo || condizioni) && (
               <div>
                 <h2 className="label-luxury text-gray-400 mb-3">Informazioni commerciali</h2>
                 <div className="space-y-2">

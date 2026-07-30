@@ -17,7 +17,11 @@ function ProductRow({ product }: { product: Product }) {
   const { isFavorited, toggle: toggleFavorite } = useFavorites();
   const { card: cs } = useSettings();
   const pathname = usePathname();
-  const productHref = pathname.startsWith('/moda') ? `/moda/product/${product.id}` : `/catalog/${product.id}`;
+  const productHref = pathname.startsWith('/moda')
+    ? `/moda/product/${product.id}`
+    : pathname.startsWith('/collezione-home')
+      ? `/catalog/${product.id}?src=home`
+      : `/catalog/${product.id}`;
   const [justAdded, setJustAdded] = useState(false);
   const [heartPop, setHeartPop] = useState(false);
 
@@ -39,7 +43,7 @@ function ProductRow({ product }: { product: Product }) {
     >
       {/* Thumbnail + heart */}
       <div className="relative flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded overflow-hidden bg-cream">
-        <Link href={`/catalog/${product.id}`} className="block w-full h-full">
+        <Link href={productHref} className="block w-full h-full">
           <ProductImage src={product.imageUrl ?? product.imageUrl2 ?? product.imageUrl3 ?? product.imageUrl4 ?? product.imageUrl5} alt={product.name} className="w-full h-full object-cover" />
         </Link>
         <button
