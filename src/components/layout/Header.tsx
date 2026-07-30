@@ -176,7 +176,7 @@ export default function Header({ session }: HeaderProps) {
                 )}
               </>
             : menu.ordine
-                .filter((key) => key !== 'preferiti' && menu.items[key]?.visibile && CASA_NAV_CONFIG[key])
+                .filter((key) => key !== 'preferiti' && menu.items[key]?.visibile && CASA_NAV_CONFIG[key] && !(isInCollezioneHome && (key === 'carrelli' || key === 'ordini')))
                 .map((key) => {
                   const config = CASA_NAV_CONFIG[key];
                   const label = menu.items[key]?.label ?? key;
