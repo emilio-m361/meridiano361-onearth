@@ -425,7 +425,7 @@ export default function AdminProductsPage({ lockedSection }: { lockedSection?: '
   const [bulkEditValues, setBulkEditValues] = useState<BulkEditValues>(EMPTY_BULK);
   const [lastUndo, setLastUndo] = useState<{ label: string; restore: () => Promise<void> } | null>(null);
   const [cataloghiModal, setCataloghiModal] = useState<{
-    onConfirm: (cataloghi: string[]) => void;
+    onConfirm: (cataloghi: string[] | 'keep' | null) => void;
     defaults: string[];
   } | null>(null);
   const [pendingCataloghi, setPendingCataloghi] = useState<string[]>([]);
@@ -681,7 +681,7 @@ export default function AdminProductsPage({ lockedSection }: { lockedSection?: '
     });
   }
 
-  function askCataloghi(defaults: string[]): Promise<string[] | null> {
+  function askCataloghi(defaults: string[]): Promise<string[] | 'keep' | null> {
     return new Promise((resolve) => {
       setPendingCataloghi(defaults.length > 0 ? [...defaults] : []);
       setCataloghiModal({
@@ -704,7 +704,7 @@ export default function AdminProductsPage({ lockedSection }: { lockedSection?: '
     if (!prevIsActive) {
       const selected = await askCataloghi(prevCataloghi);
       if (selected === null) return;
-      cataloghiToSet = selected;
+      if (selected !== 'keep') cataloghiToSet = selected;
     }
 
     // Optimistic update — aggiorna la UI prima della risposta API
@@ -904,7 +904,7 @@ export default function AdminProductsPage({ lockedSection }: { lockedSection?: '
       })();
       const selected = await askCataloghi(commonCataloghi);
       if (selected === null) return;
-      bulkCataloghi = selected;
+      if (selected !== 'keep') bulkCataloghi = selected;
     }
 
     const affectedIds = Array.from(selectedIds);
@@ -2254,9 +2254,9 @@ export default function AdminProductsPage({ lockedSection }: { lockedSection?: '
       {/* Selezione Catalogo — mostrato quando si attiva un prodotto */}
       {cataloghiModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-lg shadow-2xl p-6 w-[360px] max-w-[96vw]">
-            <h2 className="text-base font-semibold text-primary mb-1">Aggiungi al catalogo</h2>
-            <p className="text-xs text-gray-400 mb-4">Seleziona uno o più cataloghi in cui rendere visibile il prodotto.</p>
+          <div className="bg-white rounded-lg shadow-2xl p-6 w-[420px] max-w-[96vw]">
+            <h2 className="text-base font-semibold text-primary mb-1">Catalogo</h2>
+            <p className="text-xs text-gray-400 mb-4">Seleziona i cataloghi in cui rendere visibile il prodotto, oppure scegli un&apos;opzione alternativa.</p>
             <div className="space-y-2 mb-5">
               {collections.lista.map((c) => (
                 <label key={c.id} className="flex items-center gap-3 cursor-pointer group">
@@ -2274,16 +2274,37 @@ export default function AdminProductsPage({ lockedSection }: { lockedSection?: '
                 </label>
               ))}
             </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="ghost" onClick={() => { setCataloghiModal(null); cataloghiModal.onConfirm(null as any); }}>
-                Annulla
-              </Button>
-              <Button
-                onClick={() => cataloghiModal.onConfirm(pendingCataloghi)}
-                disabled={pendingCataloghi.length === 0}
-              >
-                Conferma
-              </Button>
+            <div className="border-t border-border pt-4 space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => cataloghiModal.onConfirm('keep')}
+                  className="text-left text-xs border border-border rounded-md px-3 py-2.5 hover:bg-cream transition-colors"
+                >
+                  <div className="font-medium text-primary">Lascia tutto come è</div>
+                  <div className="text-gray-400 mt-0.5">Mantieni i cataloghi attuali</div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => cataloghiModal.onConfirm([])}
+                  className="text-left text-xs border border-border rounded-md px-3 py-2.5 hover:bg-cream transition-colors"
+                >
+                  <div className="font-medium text-primary">Nessun catalogo</div>
+                  <div className="text-gray-400 mt-0.5">Rimuovi da tutti i cataloghi</div>
+                </button>
+              </div>
+              <div className="flex justify-between items-center">
+                <Button variant="ghost" size="sm" onClick={() => cataloghiModal.onConfirm(null)}>
+                  Annulla
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => cataloghiModal.onConfirm(pendingCataloghi)}
+                  disabled={pendingCataloghi.length === 0}
+                >
+                  Conferma selezione
+                </Button>
+              </div>
             </div>
           </div>
         </div>
