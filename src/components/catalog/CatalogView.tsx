@@ -397,8 +397,14 @@ export default function CatalogView({
 
     if (sortBy === 'az')        result = [...result].sort((a, b) => a.name.localeCompare(b.name, 'it'));
     else if (sortBy === 'za')   result = [...result].sort((a, b) => b.name.localeCompare(a.name, 'it'));
-    else if (sortBy === 'price-asc')  result = [...result].sort((a, b) => { const ea = Number((a as any).costoIeConReso) > 0 ? Number((a as any).costoIeConReso) : Number((a as any).costoIeSenzaReso) > 0 ? Number((a as any).costoIeSenzaReso) : Number(a.costPrice); const eb = Number((b as any).costoIeConReso) > 0 ? Number((b as any).costoIeConReso) : Number((b as any).costoIeSenzaReso) > 0 ? Number((b as any).costoIeSenzaReso) : Number(b.costPrice); return ea - eb; });
-    else if (sortBy === 'price-desc') result = [...result].sort((a, b) => { const ea = Number((a as any).costoIeConReso) > 0 ? Number((a as any).costoIeConReso) : Number((a as any).costoIeSenzaReso) > 0 ? Number((a as any).costoIeSenzaReso) : Number(a.costPrice); const eb = Number((b as any).costoIeConReso) > 0 ? Number((b as any).costoIeConReso) : Number((b as any).costoIeSenzaReso) > 0 ? Number((b as any).costoIeSenzaReso) : Number(b.costPrice); return eb - ea; });
+    else if (sortBy === 'price-asc')  result = [...result].sort((a, b) => {
+      const price = (p: typeof a) => readOnly ? Number(p.retailPrice) : (Number((p as any).costoIeConReso) > 0 ? Number((p as any).costoIeConReso) : Number((p as any).costoIeSenzaReso) > 0 ? Number((p as any).costoIeSenzaReso) : Number(p.costPrice));
+      return price(a) - price(b);
+    });
+    else if (sortBy === 'price-desc') result = [...result].sort((a, b) => {
+      const price = (p: typeof a) => readOnly ? Number(p.retailPrice) : (Number((p as any).costoIeConReso) > 0 ? Number((p as any).costoIeConReso) : Number((p as any).costoIeSenzaReso) > 0 ? Number((p as any).costoIeSenzaReso) : Number(p.costPrice));
+      return price(b) - price(a);
+    });
 
     return result;
   }, [branchProducts, debouncedSearch, filters, bloccoColoreFilter, onlyFavorites, favoriteIds, sortBy]);
