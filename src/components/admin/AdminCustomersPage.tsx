@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useDeferredValue } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, Search, Pencil, Trash2, Eye, EyeOff, KeyRound, Copy, Send, MoreHorizontal, Download } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
@@ -21,6 +21,7 @@ interface ResetResult {
 export default function AdminCustomersPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
+  const deferredSearch = useDeferredValue(search);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [resetting, setResetting] = useState<string | null>(null);
@@ -54,14 +55,15 @@ export default function AdminCustomersPage() {
   }, [dropdownCustomerId]);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['admin-customers', search],
+    queryKey: ['admin-customers', deferredSearch],
     queryFn: async () => {
       const params = new URLSearchParams({ limit: '200' });
-      if (search) params.set('search', search);
+      if (deferredSearch) params.set('search', deferredSearch);
       const res = await fetch(`/api/customers?${params}`);
       if (!res.ok) throw new Error('Failed');
       return res.json();
     },
+    placeholderData: (prev) => prev,
   });
 
   const customers: (Customer & { orderCount?: number })[] = data?.data || [];
