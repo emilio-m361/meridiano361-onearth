@@ -707,6 +707,23 @@ export default function AdminProductsPage({ lockedSection }: { lockedSection?: '
       cataloghiToSet = selected;
     }
 
+    // Optimistic update — aggiorna la UI prima della risposta API
+    const applyOptimistic = (isActive: boolean, cataloghi?: string[]) => {
+      queryClient.setQueryData(['admin-products'], (old: any) => {
+        if (!old?.data) return old;
+        return {
+          ...old,
+          data: old.data.map((p: Product) =>
+            p.id === productId
+              ? { ...p, isActive, ...(cataloghi !== undefined ? { cataloghi } : {}) }
+              : p
+          ),
+        };
+      });
+    };
+
+    applyOptimistic(!prevIsActive, cataloghiToSet);
+
     try {
       const body: Record<string, unknown> = { isActive: !prevIsActive };
       if (cataloghiToSet !== undefined) body.cataloghi = cataloghiToSet;
@@ -716,22 +733,23 @@ export default function AdminProductsPage({ lockedSection }: { lockedSection?: '
         body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error('Failed');
-      await queryClient.invalidateQueries({ queryKey: ['admin-products'] });
       toast.success(`Prodotto ${prevIsActive ? 'disattivato' : 'attivato'}`);
       setLastUndo({
         label: `${prevIsActive ? 'Disattivazione' : 'Attivazione'} di "${productName}"`,
         restore: async () => {
+          applyOptimistic(prevIsActive, prevCataloghi);
           await fetch(`/api/products/${productId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ isActive: prevIsActive, cataloghi: prevCataloghi }),
           });
-          await queryClient.invalidateQueries({ queryKey: ['admin-products'] });
           setLastUndo(null);
           toast.success('Operazione annullata');
         },
       });
     } catch {
+      // Rollback in caso di errore
+      applyOptimistic(prevIsActive, prevCataloghi);
       toast.error('Impossibile aggiornare il prodotto');
     }
   }
