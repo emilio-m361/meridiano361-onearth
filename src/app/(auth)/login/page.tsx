@@ -15,12 +15,20 @@ export const metadata: Metadata = {
   description: 'Accedi alla piattaforma ordini B2B ON EARTH',
 };
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams?: { callbackUrl?: string };
+}) {
   const session = await getServerSession(authOptions);
 
   if (session) {
-    redirect('/home');
+    const cb = searchParams?.callbackUrl;
+    const dest = cb && cb.startsWith('/') ? cb : '/home';
+    redirect(dest);
   }
+
+  const callbackUrl = searchParams?.callbackUrl;
 
   const [t, settingsRecords] = await Promise.all([
     getTranslations('login'),
@@ -108,7 +116,7 @@ export default async function LoginPage() {
             </h2>
           </div>
 
-          <LoginForm />
+          <LoginForm callbackUrl={callbackUrl} />
 
           <div className="mt-8 flex flex-col items-center gap-2.5 text-xs">
             <RequestAccessButton />

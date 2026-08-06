@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from 'react';
 import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -12,8 +11,7 @@ import toast from 'react-hot-toast';
 
 type LoginValues = { email: string; password: string };
 
-export default function LoginForm() {
-  const router = useRouter();
+export default function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
   const t = useTranslations('login');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -49,12 +47,8 @@ export default function LoginForm() {
         return;
       }
 
-      const response = await fetch('/api/auth/session', { cache: 'no-store' });
-      const session = await response.json();
-      const role = session?.user?.role ?? '';
-      const adminRoles = ['SUPER_ADMIN', 'ADMIN', 'COMMERCIALE', 'MAGAZZINO'];
-
-      window.location.href = '/home';
+      const dest = callbackUrl && callbackUrl.startsWith('/') ? callbackUrl : '/home';
+      window.location.href = dest;
     } catch {
       toast.error(t('errorGeneric'));
     } finally {
