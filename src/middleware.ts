@@ -63,6 +63,10 @@ export const config = {
     '/moda',
     '/casa/:path*',
     '/casa',
+    '/budget',
+    '/budget/:path*',
+    '/collezione-home',
+    '/collezione-home/:path*',
     '/seleziona-destinazione',
   ],
 };

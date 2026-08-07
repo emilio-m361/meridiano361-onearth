@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, Pencil, Trash2, Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -618,8 +619,32 @@ function ProduttoriTab() {
 }
 
 export default function AdminClassificazionePage() {
-  const [activeTab, setActiveTab] = useState(TIPI_CASA[0].tipo);
-  const [selectedTree, setSelectedTree] = useState<Tree>('casa');
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const [selectedTree, setSelectedTreeState] = useState<Tree>(
+    () => (searchParams.get('tree') as Tree) ?? 'casa'
+  );
+  const defaultTabForTree = selectedTree === 'moda' ? TIPI_MODA[0].tipo : TIPI_CASA[0].tipo;
+  const [activeTab, setActiveTabState] = useState<string>(
+    () => searchParams.get('tab') ?? defaultTabForTree
+  );
+
+  function setActiveTab(tab: string) {
+    setActiveTabState(tab);
+    const p = new URLSearchParams(searchParams.toString());
+    p.set('tab', tab);
+    router.replace(`${pathname}?${p.toString()}`, { scroll: false });
+  }
+
+  function setSelectedTree(tree: Tree) {
+    setSelectedTreeState(tree);
+    const p = new URLSearchParams(searchParams.toString());
+    p.set('tree', tree);
+    p.delete('tab');
+    router.replace(`${pathname}?${p.toString()}`, { scroll: false });
+  }
 
   // Carica tutti i GM per ricavare l'id radice di ciascun albero
   const { data: gmList } = useQuery<ValoreItem[]>({
@@ -639,9 +664,14 @@ export default function AdminClassificazionePage() {
 
   // Quando si cambia albero, resetta la tab attiva alla prima tab dell'albero scelto
   function handleTreeChange(tree: Tree) {
-    setSelectedTree(tree);
     const tipi = tree === 'moda' ? TIPI_MODA : TIPI_CASA;
-    setActiveTab(tipi[0].tipo);
+    const firstTab = tipi[0].tipo;
+    setSelectedTreeState(tree);
+    setActiveTabState(firstTab);
+    const p = new URLSearchParams(searchParams.toString());
+    p.set('tree', tree);
+    p.set('tab', firstTab);
+    router.replace(`${pathname}?${p.toString()}`, { scroll: false });
   }
 
   return (

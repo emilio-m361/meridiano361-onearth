@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import {
   BookOpen,
@@ -1921,6 +1922,10 @@ function TypoToolbar({
 // ── Main Component ─────────────────────────────────────────────────────────────
 
 export default function AdminCatalogoPDFPage() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const [config, setConfig] = useState<FormState>(loadConfigFromStorage);
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [preview, setPreview] = useState<PreviewResult | null>(null);
@@ -1930,7 +1935,16 @@ export default function AdminCatalogoPDFPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [showTemplates, setShowTemplates] = useState(true);
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'generale' | 'scheda' | 'copertina' | 'ultima' | 'penultima'>('generale');
+  const [activeTab, setActiveTabState] = useState<'generale' | 'scheda' | 'copertina' | 'ultima' | 'penultima'>(
+    () => (searchParams.get('tab') as 'generale' | 'scheda' | 'copertina' | 'ultima' | 'penultima') ?? 'generale'
+  );
+
+  function setActiveTab(next: 'generale' | 'scheda' | 'copertina' | 'ultima' | 'penultima') {
+    setActiveTabState(next);
+    const p = new URLSearchParams(searchParams.toString());
+    p.set('tab', next);
+    router.replace(`${pathname}?${p.toString()}`, { scroll: false });
+  }
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logoFileInputRef = useRef<HTMLInputElement>(null);
   const copertinaLogo2FileInputRef = useRef<HTMLInputElement>(null);

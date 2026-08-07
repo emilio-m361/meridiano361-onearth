@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -356,7 +357,20 @@ function ResetPasswordModal({
 // ─── Main Component ────────────────────────────────────────────────────────────
 
 export default function AdminAnalyticsPage() {
-  const [tab, setTab] = useState<'panoramica' | 'acceduto' | 'mai'>('panoramica');
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const [tab, setTabState] = useState<'panoramica' | 'acceduto' | 'mai'>(
+    () => (searchParams.get('tab') as 'panoramica' | 'acceduto' | 'mai') ?? 'panoramica'
+  );
+
+  function setTab(next: 'panoramica' | 'acceduto' | 'mai') {
+    setTabState(next);
+    const p = new URLSearchParams(searchParams.toString());
+    p.set('tab', next);
+    router.replace(`${pathname}?${p.toString()}`, { scroll: false });
+  }
   const [chartView, setChartView] = useState<'day' | 'week' | 'month'>('day');
   const [searchAcceduto, setSearchAcceduto] = useState('');
   const [searchMai, setSearchMai] = useState('');
