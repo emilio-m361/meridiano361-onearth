@@ -5,7 +5,7 @@ import { signIn } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Fingerprint } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import toast from 'react-hot-toast';
 
@@ -15,6 +15,7 @@ export default function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
   const t = useTranslations('login');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isBiometricLoading, setIsBiometricLoading] = useState(false);
 
   const loginSchema = useMemo(
     () =>
@@ -53,6 +54,44 @@ export default function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
       toast.error(t('errorGeneric'));
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function onBiometricLogin() {
+    setIsBiometricLoading(true);
+    try {
+      const { startAuthentication } = await import('@simplewebauthn/browser');
+
+      const optRes = await fetch('/api/auth/webauthn/auth-options', { method: 'POST' });
+      if (!optRes.ok) throw new Error('Impossibile avviare autenticazione');
+      const options = await optRes.json();
+
+      let assertion;
+      try {
+        assertion = await startAuthentication({ optionsJSON: options });
+      } catch (e: any) {
+        if (e?.name === 'NotAllowedError') return; // user cancelled
+        throw e;
+      }
+
+      const verifyRes = await fetch('/api/auth/webauthn/auth-verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ response: assertion }),
+      });
+      const verifyData = await verifyRes.json();
+      if (!verifyRes.ok) throw new Error(verifyData.error ?? 'Verifica fallita');
+
+      const { token, userId, userType } = verifyData;
+      const result = await signIn('webauthn', { token, userId, userType, redirect: false });
+      if (result?.error) throw new Error('Accesso fallito');
+
+      const dest = callbackUrl && callbackUrl.startsWith('/') ? callbackUrl : '/home';
+      window.location.href = dest;
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Autenticazione biometrica non riuscita');
+    } finally {
+      setIsBiometricLoading(false);
     }
   }
 
@@ -112,6 +151,26 @@ export default function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
         ) : (
           t('submit')
         )}
+      </button>
+
+      <div className="relative flex items-center gap-3">
+        <div className="flex-1 h-px bg-border" />
+        <span className="text-xs text-gray-400">oppure</span>
+        <div className="flex-1 h-px bg-border" />
+      </div>
+
+      <button
+        type="button"
+        onClick={onBiometricLogin}
+        disabled={isBiometricLoading}
+        className="w-full py-3 border border-border rounded text-sm text-primary font-medium transition-all duration-150 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+      >
+        {isBiometricLoading ? (
+          <Loader2 size={16} className="animate-spin" />
+        ) : (
+          <Fingerprint size={18} />
+        )}
+        Accedi con Face ID / Touch ID
       </button>
     </form>
   );

@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs';
 import type { AppRole } from '@/types';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { securityLog } from '@/lib/securityLog';
+import { verifyWebAuthnToken } from '@/lib/webauthn';
 
 function detectDevice(ua: string | undefined): string {
   if (!ua) return 'desktop';
@@ -56,6 +57,50 @@ async function computeCanAccessVisual(token: any) {
 
 export const authOptions: NextAuthOptions = {
   providers: [
+    CredentialsProvider({
+      id: 'webauthn',
+      name: 'Passkey',
+      credentials: {
+        token: { label: 'Token', type: 'text' },
+        userId: { label: 'UserId', type: 'text' },
+        userType: { label: 'UserType', type: 'text' },
+      },
+      async authorize(credentials) {
+        if (!credentials?.token || !credentials?.userId || !credentials?.userType) return null;
+        try {
+          verifyWebAuthnToken(credentials.token);
+        } catch {
+          return null;
+        }
+        const { userId, userType } = credentials;
+        if (userType === 'operator') {
+          const operator = await prisma.operator.findUnique({
+            where: { id: userId, attivo: true },
+            include: { organization: true },
+          });
+          if (!operator) return null;
+          return {
+            id: operator.id,
+            email: operator.email,
+            role: 'OPERATOR' as AppRole,
+            companyName: operator.organization.nome,
+            customerCode: '',
+            organizationId: operator.organizationId,
+            featureMondiEspositivi: operator.featureMondiEspositivi,
+            orgNome: operator.organization.nome,
+          } as any;
+        }
+        const customer = await prisma.customer.findUnique({ where: { id: userId, isActive: true } });
+        if (!customer) return null;
+        return {
+          id: customer.id,
+          email: customer.email,
+          role: customer.role as AppRole,
+          companyName: customer.companyName,
+          customerCode: customer.customerCode,
+        };
+      },
+    }),
     CredentialsProvider({
       name: 'Credentials',
       credentials: {

@@ -317,6 +317,7 @@ model Customer {
   customerNotifReads     CustomerNotificationRead[]
   surveyRecipients       SurveyRecipient[]
   surveyResponses        SurveyResponse[]
+  webAuthnCredentials    WebAuthnCredential[]
 
   @@map("customers")
 }
@@ -367,12 +368,13 @@ model Operator {
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 
-  organization    Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  ordini          Order[]
-  carts           Cart[]
-  favorites       Favorite[]
-  displayPresets  DisplayGroupPreset[]
-  spaziEspositivi SpazioEspositivo[]
+  organization        Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  ordini              Order[]
+  carts               Cart[]
+  favorites           Favorite[]
+  displayPresets      DisplayGroupPreset[]
+  spaziEspositivi     SpazioEspositivo[]
+  webAuthnCredentials WebAuthnCredential[]
 
   @@map("operators")
 }
@@ -1173,4 +1175,36 @@ model BudgetSubclassData {
 
   @@unique([scenarioId, famiglia, sottoclasse])
   @@map("budget_subclass_data")
+}
+
+// ─── WebAuthn / Passkey ───────────────────────────────────────────────────────
+
+model WebAuthnCredential {
+  id             String   @id @default(cuid())
+  credentialId   String   @unique
+  publicKey      Bytes
+  counter        BigInt   @default(0)
+  deviceType     String   @default("singleDevice")
+  backedUp       Boolean  @default(false)
+  transports     String?
+  label          String?
+  customerId     String?
+  operatorId     String?
+  createdAt      DateTime @default(now())
+
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  operator Operator? @relation(fields: [operatorId], references: [id], onDelete: Cascade)
+
+  @@map("webauthn_credentials")
+}
+
+model WebAuthnChallenge {
+  id        String   @id @default(cuid())
+  userId    String
+  userType  String
+  challenge String
+  expiresAt DateTime
+
+  @@index([userId, userType])
+  @@map("webauthn_challenges")
 }

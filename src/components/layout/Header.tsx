@@ -4,11 +4,12 @@ import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import { Session } from 'next-auth';
-import { LogOut, UserCircle, HelpCircle, Home, Settings, Heart } from 'lucide-react';
+import { LogOut, UserCircle, HelpCircle, Home, Settings, Heart, Fingerprint } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import NotificationBell from '@/components/layout/NotificationBell';
+import PasskeyRegisterButton from '@/components/layout/PasskeyRegisterButton';
 import { useSettings } from '@/contexts/SettingsContext';
 import { isAdminRole } from '@/lib/roles';
 import { useFeatureFlags } from '@/hooks/useFeatureFlags';
@@ -294,6 +295,14 @@ export default function Header({ session }: HeaderProps) {
         </Link>
         <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 text-[10px] font-semibold tracking-wider uppercase bg-gray-900 text-white rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150">
           Profilo
+        </span>
+      </div>
+
+      {/* Registra Passkey */}
+      <div className="relative group hidden sm:block">
+        <PasskeyRegisterButton />
+        <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 text-[10px] font-semibold tracking-wider uppercase bg-gray-900 text-white rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+          Face ID / Touch ID
         </span>
       </div>
 
